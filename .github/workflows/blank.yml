@@ -1,0 +1,37 @@
+name: Deploy Next.js to Appwrite
+
+on:
+  push:
+    branches:
+      - main  # Trigger when pushing to main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20' # your Node version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Next.js app
+        run: npm run build && npm run export
+
+      - name: Deploy to Appwrite
+        env:
+          APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
+          APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
+          APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+        run: |
+          # Install Appwrite CLI
+          npm install -g node-appwrite-cli
+          
+          # Upload static files (assuming exported to out/)
+          node-appwrite-cli storage create-file --bucketId 698c5cb20003f5ef076e --filePath ./out
