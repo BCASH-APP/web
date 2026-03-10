@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/react';
 import './index.css';
 import App from './App.tsx';
@@ -17,9 +17,9 @@ if (!clerkPublishableKey) {
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <ClerkProvider publishableKey={clerkPublishableKey}>
-      <HashRouter>
+      <BrowserRouter>
         <App />
-      </HashRouter>
+      </BrowserRouter>
     </ClerkProvider>
   </StrictMode>,
 );

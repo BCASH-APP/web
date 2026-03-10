@@ -27,19 +27,21 @@
 .app-logo-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
   border-radius: 999px;
-  padding: 0.3rem 0.75rem 0.35rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.4rem;
   background: linear-gradient(120deg, #2a4d46, #3d7066, #5a8d81);
   color: #f9fafb;
   box-shadow: 0 10px 25px rgba(61, 112, 102, 0.3);
+  text-decoration: none;
 }
 
-.app-logo-dot {
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 999px;
-  background: radial-gradient(circle at 30% 30%, #fef9c3, #3d7066);
+.app-logo-image {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.8rem;
+  background-color: #fdfbfa;
+  padding: 0.12rem;
 }
 
 .app-logo-text-main {

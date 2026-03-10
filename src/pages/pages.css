@@ -7,3 +7,58 @@
   font-size: 0.74rem;
 }
 
+/* Legal (Privacy / Terms) – same structure as DashingBakery app/auth/privacy.tsx & terms.tsx */
+.legal-page {
+  padding-bottom: 3rem;
+}
+.legal-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0 1rem;
+  border-bottom: 1px solid var(--border, #c5d1cf);
+  margin-bottom: 0.5rem;
+}
+.legal-back {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary, #3d7066);
+  padding: 0.5rem 0;
+}
+.legal-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text, #1a332e);
+  margin: 0;
+}
+.legal-icon-wrap {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 3rem;
+}
+.legal-last-updated {
+  font-size: 0.875rem;
+  color: var(--muted, #8a9e9a);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+.legal-section-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--primary, #3d7066);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.legal-paragraph {
+  font-size: 0.9375rem;
+  color: var(--text, #1a332e);
+  line-height: 1.5;
+  opacity: 0.9;
+  margin: 0 0 0.5rem;
+}
+.legal-paragraph strong {
+  font-weight: 700;
+}
+
