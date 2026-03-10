@@ -1,4 +1,4 @@
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, Link } from 'react-router-dom';
 import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/react';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
@@ -21,16 +21,16 @@ function App() {
           </div>
         </div>
         <nav className="app-header-nav">
-          <a href="/" className="app-nav-link">
+          <Link to="/" className="app-nav-link">
             Home
-          </a>
-          <a href="/releases" className="app-nav-link">
+          </Link>
+          <Link to="/releases" className="app-nav-link">
             Releases
-          </a>
+          </Link>
           <Show when="signed-in">
-            <a href="/dashboard" className="app-nav-link">
+            <Link to="/dashboard" className="app-nav-link">
               Dashboard
-            </a>
+            </Link>
           </Show>
         </nav>
         <div className="app-header-right">

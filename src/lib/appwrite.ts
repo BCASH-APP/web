@@ -2,6 +2,8 @@ import { Client, Databases, Account, Functions } from 'appwrite';
 
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
 const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+export const databaseId = import.meta.env.VITE_APPWRITE_DB_ID;
+export const paymentsCollectionId = import.meta.env.VITE_APPWRITE_PAYMENTS_COLLECTION_ID;
 
 const client = new Client();
 
