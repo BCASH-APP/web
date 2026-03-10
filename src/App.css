@@ -30,16 +30,16 @@
   gap: 0.35rem;
   border-radius: 999px;
   padding: 0.3rem 0.75rem 0.35rem;
-  background: linear-gradient(120deg, #f97316, #facc15, #fb7185);
-  color: #0f172a;
-  box-shadow: 0 10px 25px rgba(248, 113, 113, 0.23);
+  background: linear-gradient(120deg, #2a4d46, #3d7066, #5a8d81);
+  color: #f9fafb;
+  box-shadow: 0 10px 25px rgba(61, 112, 102, 0.3);
 }
 
 .app-logo-dot {
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 30%, #fefce8, #f97316);
+  background: radial-gradient(circle at 30% 30%, #fef9c3, #3d7066);
 }
 
 .app-logo-text-main {
@@ -69,8 +69,8 @@
 }
 
 .app-nav-link:hover {
-  background-color: rgba(15, 23, 42, 0.06);
-  color: #0f172a;
+  background-color: rgba(61, 112, 102, 0.12);
+  color: #1a332e;
 }
 
 .app-header-right {
@@ -94,24 +94,24 @@
 }
 
 .app-btn-primary {
-  background-color: #0f172a;
-  color: #e5e7eb;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+  background-color: #3d7066;
+  color: #f9fafb;
+  box-shadow: 0 8px 18px rgba(61, 112, 102, 0.35);
 }
 
 .app-btn-primary:hover {
-  background-color: #020617;
+  background-color: #2a4d46;
   transform: translateY(-1px);
 }
 
 .app-btn-secondary {
-  background-color: white;
-  color: #0f172a;
-  border-color: rgba(148, 163, 184, 0.8);
+  background-color: #ffffff;
+  color: #1a332e;
+  border-color: #c5d1cf;
 }
 
 .app-btn-secondary:hover {
-  background-color: #f9fafb;
+  background-color: #fdfbfa;
 }
 
 .app-main {

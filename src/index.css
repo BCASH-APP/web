@@ -5,8 +5,19 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #020617;
-  background-color: #f9fafb;
+  /* DashingBakery LightColors */
+  --bg: #ffffff;
+  --bg-alt: #fdfbfa;
+  --text: #1a332e;
+  --subtext: #5a7d76;
+  --primary: #3d7066;
+  --secondary: #5a8d81;
+  --accent: #b8ccc9;
+  --muted: #8a9e9a;
+  --border: #c5d1cf;
+  --surface: #ffffff;
+  color: var(--text);
+  background-color: var(--bg);
 }
 
 *,
@@ -19,10 +30,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top left, #fef3c7 0, transparent 45%),
-    radial-gradient(circle at bottom right, #fee2e2 0, transparent 50%),
-    #f9fafb;
-  color: #020617;
+  background:
+    radial-gradient(circle at top left, #fefce8 0, transparent 45%),
+    radial-gradient(circle at bottom right, #fef2f2 0, transparent 50%),
+    var(--bg-alt);
+  color: var(--text);
 }
 
 a {

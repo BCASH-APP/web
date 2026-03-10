@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Show, SignIn } from '@clerk/react';
 import '../pages.css';
 
 const APP_SCHEME_URL = 'dashingbakery://';
@@ -56,6 +57,15 @@ export const InvitationPage = () => {
           You can tune the timing, parameters, and destination URL to exactly match your React
           Native implementation.
         </p>
+
+        <div style={{ marginTop: '1.4rem' }}>
+          <Show when="signed-out">
+            <p className="text-eyebrow" style={{ marginBottom: '0.4rem' }}>
+              Sign in to accept
+            </p>
+            <SignIn routing="path" path="/auth/invitation" />
+          </Show>
+        </div>
       </section>
     </div>
   );

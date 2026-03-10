@@ -1,5 +1,5 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
-import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/react';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
 import { SignUpPage } from './pages/auth/SignUpPage';
@@ -27,24 +27,28 @@ function App() {
           <a href="/releases" className="app-nav-link">
             Releases
           </a>
-          <SignedIn>
+          <Show when="signed-in">
             <a href="/dashboard" className="app-nav-link">
               Dashboard
             </a>
-          </SignedIn>
+          </Show>
         </nav>
         <div className="app-header-right">
-          <SignedOut>
-            <a href="/auth/sign-in" className="app-btn-secondary">
-              Sign in
-            </a>
-            <a href="/auth/sign-up" className="app-btn-primary">
-              Sign up
-            </a>
-          </SignedOut>
-          <SignedIn>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="app-btn-secondary" type="button">
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="app-btn-primary" type="button">
+                Sign up
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
             <UserButton />
-          </SignedIn>
+          </Show>
         </div>
       </header>
 
@@ -56,14 +60,7 @@ function App() {
           <Route path="/auth/sign-up" element={<SignUpPage />} />
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/invitation" element={<InvitationPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <SignedIn>
-                <DashboardPage />
-              </SignedIn>
-            }
-          />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

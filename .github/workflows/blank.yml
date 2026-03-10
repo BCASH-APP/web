@@ -1,4 +1,4 @@
-name: Deploy Next.js to Appwrite
+name: Deploy Vite app to Appwrite
 
 on:
   push:
@@ -21,8 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js app
-        run: npm run build && npm run export
+      - name: Build web app
+        run: npm run build
 
       - name: Deploy to Appwrite
         env:
@@ -32,6 +32,6 @@ jobs:
         run: |
           # Install Appwrite CLI
           npm install -g node-appwrite-cli
-          
-          # Upload static files (assuming exported to out/)
-          node-appwrite-cli storage create-file --bucketId 698c5cb20003f5ef076e --filePath ./out
+
+          # Upload static files built by Vite (dist/)
+          node-appwrite-cli storage create-file --bucketId 698c5cb20003f5ef076e --filePath ./dist
