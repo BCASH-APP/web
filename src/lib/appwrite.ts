@@ -3,6 +3,12 @@ import { Client, Databases, Account, Functions } from 'appwrite';
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
 const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 export const databaseId = import.meta.env.VITE_APPWRITE_DB_ID;
+
+// Collection IDs (defaults match DashingBakery mobile app names)
+export const salesCollectionId =
+  import.meta.env.VITE_APPWRITE_SALES_COLLECTION_ID || 'sales';
+export const saleItemsCollectionId =
+  import.meta.env.VITE_APPWRITE_SALE_ITEMS_COLLECTION_ID || 'sale_items';
 export const paymentsCollectionId = import.meta.env.VITE_APPWRITE_PAYMENTS_COLLECTION_ID;
 
 const client = new Client();
