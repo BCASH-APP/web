@@ -18,8 +18,8 @@ function App() {
       <header className="app-header">
         <div className="app-header-left">
           <Link to="/" className="app-logo-pill">
-            <img src={appIcon} alt="DashingBakery icon" className="app-logo-image" />
-            <span className="app-logo-text-main">DashingBakery</span>
+            <img src={appIcon} alt="BCash icon" className="app-logo-image" />
+            <span className="app-logo-text-main">BCash</span>
             <span className="app-logo-text-sub">Web</span>
           </Link>
         </div>

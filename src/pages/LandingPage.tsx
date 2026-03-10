@@ -11,7 +11,7 @@ export const LandingPage = () => {
             Your bakery hub for sign‑ins, invites, and releases.
           </h1>
           <p className="text-subtitle" style={{ marginTop: '0.75rem' }}>
-            DashingBakery Web connects your team, guests, and store owners with the same identity and
+            BCash Web connects your team, guests, and store owners with the same identity and
             data model as the React Native app, powered by Clerk and Appwrite.
           </p>
 
@@ -57,7 +57,7 @@ export const LandingPage = () => {
             authentication, while Appwrite stores your bakeries, orders, and reports.
           </p>
           <ul className="invite-steps">
-            <li>Customers and staff follow links sent from DashingBakery.</li>
+            <li>Customers and staff follow links sent from BCash.</li>
             <li>Clerk verifies their identity (email or social providers).</li>
             <li>
               The web app deep‑links into the mobile app using the{' '}
