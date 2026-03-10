@@ -1,0 +1,9 @@
+.code-inline {
+  padding: 0.06rem 0.3rem;
+  border-radius: 999px;
+  background-color: #0f172a0d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.74rem;
+}
+
