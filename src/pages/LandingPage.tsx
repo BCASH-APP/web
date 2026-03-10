@@ -39,6 +39,14 @@ export const LandingPage = () => {
                 via a secure deep link.
               </p>
             </div>
+            <div> 
+              <Link to="/privacy" className="app-btn-secondary">
+                Privacy Policy
+              </Link>
+              <Link to="/policy" className="app-btn-secondary">
+                Terms of Service
+              </Link>
+            </div>
           </div>
         </section>
 
