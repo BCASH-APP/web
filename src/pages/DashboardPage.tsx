@@ -523,13 +523,15 @@ export const DashboardPage = () => {
               {managementView ? (
                 <div className="management-view-container">
                   <header className="management-view-header">
-                    <button className="back-btn" onClick={() => setManagementView(null)}>
-                      <ArrowLeft size={18} /> Back to Dashboard
+                    <button className="back-btn" onClick={() => setManagementView(null)} title="Back to Dashboard">
+                      <ArrowLeft size={18} /> <span className="hide-mobile">Back to Dashboard</span>
                     </button>
                     <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
-                    <button className="app-btn-primary add-item-btn" onClick={handleCreate}>
-                      <Plus size={16} /> Add {managementView.slice(0, -1)}
-                    </button>
+                    {managementView !== 'transactions' && managementView !== 'staff' && (
+                      <button className="app-btn-primary add-item-btn" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
+                        <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
+                      </button>
+                    )}
                   </header>
                   
                   <div className="management-list-card page-card">
