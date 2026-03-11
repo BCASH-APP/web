@@ -585,51 +585,53 @@ export const DashboardPage = () => {
                 </div>
               </div>
 
-              <div className="dashboard-charts-grid">
-                <div className="dashboard-card chart-main">
-                  <h3 className="dashboard-card-title">Revenue Trend</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={stats.chartData}>
-                      <XAxis dataKey="label" stroke={MUTED} fontSize={11} />
-                      <YAxis stroke={MUTED} fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
-                      <Area type="monotone" dataKey="value" stroke={PRIMARY} fill={PRIMARY} fillOpacity={0.1} strokeWidth={2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="dashboard-charts-main">
+            <div className="dashboard-card chart-hero">
+              <h3 className="dashboard-card-title">Revenue Trend</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={stats.chartData}>
+                  <XAxis dataKey="label" stroke={MUTED} fontSize={11} />
+                  <YAxis stroke={MUTED} fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
+                  <Area type="monotone" dataKey="value" stroke={PRIMARY} fill={PRIMARY} fillOpacity={0.1} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-                <div className="dashboard-card">
-                  <h3 className="dashboard-card-title">Peak Hours</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={stats.topHours}>
-                      <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
-                      <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} />
-                      <Bar dataKey="value" fill={PRIMARY} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+          <div className="dashboard-charts-row">
+            <div className="dashboard-card">
+              <h3 className="dashboard-card-title">Peak Hours</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={stats.topHours}>
+                  <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
+                  <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} />
+                  <Bar dataKey="value" fill={PRIMARY} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
-                <div className="dashboard-card">
-                  <h3 className="dashboard-card-title">Payment Methods</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={stats.paymentData}
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {stats.paymentData.map((_, index) => (
-                          <Cell key={index} fill={[PRIMARY, SUCCESS, WARNING, DANGER, MUTED][index % 5]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+            <div className="dashboard-card">
+              <h3 className="dashboard-card-title">Payment Methods</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={stats.paymentData}
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {stats.paymentData.map((_, index) => (
+                      <Cell key={index} fill={[PRIMARY, SUCCESS, WARNING, DANGER, MUTED][index % 5]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
               <div className="dashboard-two-col">
                 <div className="dashboard-card">

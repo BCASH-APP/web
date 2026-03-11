@@ -1641,3 +1641,45 @@
   font-weight: 600;
 }
 
+
+/* Analytics Layout Updates */
+.dashboard-charts-main {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-charts-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-charts-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chart-hero {
+  min-height: 380px;
+}
+
+/* Quick Action Logic - ensure they are visible */
+.action-section {
+  min-height: 200px;
+}
+
+.dashboard-loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #3d7066;
+  background: white;
+  border-radius: 20px;
+  border: 1px dashed #cbd5e1;
+}
+
