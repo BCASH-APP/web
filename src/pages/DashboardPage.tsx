@@ -34,6 +34,7 @@ import {
   Edit2,
   Trash2,
   X,
+  Smartphone,
 } from 'lucide-react';
 import './pages.css';
 import {
@@ -87,6 +88,7 @@ type ProductDoc = {
   price?: number;
   imageUrl?: string;
   useHpp?: boolean;
+  recipeId?: string;
   categoryName?: string;
 };
 type CategoryDoc = { $id: string; name?: string; color?: string };
@@ -488,6 +490,13 @@ export const DashboardPage = () => {
               </option>
             ))}
           </select>
+          <a
+            href="dashingbakery://"
+            className="open-app-btn"
+            title="Open BCash App"
+          >
+            <Smartphone size={16} /> <span className="hide-mobile">Open App</span>
+          </a>
         </div>
       </div>
 
@@ -1023,6 +1032,7 @@ export const DashboardPage = () => {
           onSave={handleSave}
           initialData={editingItem}
           categories={categories}
+          recipes={recipes}
           loading={formLoading}
         />
       )}
@@ -1045,10 +1055,11 @@ type ModalProps = {
   onSave: (data: any) => Promise<void>;
   initialData?: any;
   categories: CategoryDoc[];
+  recipes: RecipeDoc[];
   loading: boolean;
 };
 
-const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, loading }) => {
+const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, loading }) => {
   const [formData, setFormData] = useState<any>(initialData || {});
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1152,6 +1163,22 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                   />
                 </div>
               </div>
+
+              {formData.useHpp && (
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label>Link to Recipe</label>
+                  <select
+                    required={formData.useHpp}
+                    value={formData.recipeId || ''}
+                    onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
+                  >
+                    <option value="">Select Recipe</option>
+                    {recipes.map((r) => (
+                      <option key={r.$id} value={r.$id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </>
           )}
 
