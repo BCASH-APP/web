@@ -1,78 +1,144 @@
 import { Link } from 'react-router-dom';
 import './pages.css';
+import appIconPng from '../assets/appIcon/icon.png';
+import splashIcon from '../assets/appIcon/splash-icon.png';
+import adaptiveIcon from '../assets/appIcon/adaptive-icon.png';
+
+const FEATURES = [
+  {
+    icon: '🛒',
+    title: 'Point of Sale (POS)',
+    desc: 'Seamless cashier experience with cart, payment methods, and instant receipts.',
+  },
+  {
+    icon: '📊',
+    title: 'Sales Analytics',
+    desc: 'Daily, weekly, and monthly reports. Revenue trends, peak hours, and top products at a glance.',
+  },
+  {
+    icon: '🧾',
+    title: 'Transaction History',
+    desc: 'Full transaction logs with search, filters, and detailed breakdowns per sale.',
+  },
+  {
+    icon: '🧂',
+    title: 'Ingredient & Stock',
+    desc: 'Track ingredient usage automatically on every sale. Restock alerts when stock runs low.',
+  },
+  {
+    icon: '👥',
+    title: 'Staff Management',
+    desc: 'Invite staff via email. Role-based access for owners, admins, and cashiers.',
+  },
+  {
+    icon: '🌐',
+    title: 'Web Dashboard',
+    desc: 'Access your bakery data from any browser. Full analytics, reports, and team management.',
+  },
+];
 
 export const LandingPage = () => {
   return (
-    <div className="page-shell">
-      <div className="page-grid">
-        <section className="page-card">
-          <div className="tag-pill tag-soft">Bakery teams · Mobile & web</div>
-          <h1 className="text-heading" style={{ marginTop: '0.75rem' }}>
-            Your bakery hub for sign‑ins, invites, and releases.
+    <div className="landing-root">
+
+      {/* ── Hero Section ─────────────────────────────────────── */}
+      <section className="landing-hero">
+        {/* Left panel – app visuals */}
+        <div className="landing-left">
+          <div className="landing-phone-stack">
+            <div className="landing-phone landing-phone-back">
+              <img src={adaptiveIcon} alt="DashingBakery adaptive icon" className="landing-phone-img" />
+            </div>
+            <div className="landing-phone landing-phone-front">
+              <img src={splashIcon} alt="DashingBakery splash" className="landing-phone-img landing-phone-img-cover" />
+            </div>
+          </div>
+
+          <div className="landing-app-badge">
+            <img src={appIconPng} alt="DashingBakery icon" className="landing-badge-icon" />
+            <div className="landing-badge-text">
+              <span className="landing-badge-name">DashingBakery</span>
+              <span className="landing-badge-sub">by BCash</span>
+            </div>
+          </div>
+
+          <div className="landing-stat-chips">
+            <div className="landing-stat-chip">
+              <span className="landing-stat-num">POS</span>
+              <span className="landing-stat-label">Integrated</span>
+            </div>
+            <div className="landing-stat-chip">
+              <span className="landing-stat-num">∞</span>
+              <span className="landing-stat-label">Transactions</span>
+            </div>
+            <div className="landing-stat-chip">
+              <span className="landing-stat-num">Real‑time</span>
+              <span className="landing-stat-label">Analytics</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right panel – app name + features */}
+        <div className="landing-right">
+          <div className="landing-eyebrow-pill">🥐 Bakery Management App</div>
+
+          <h1 className="landing-title">
+            DashingBakery
+            <span className="landing-title-accent"> — Run your bakery smarter.</span>
           </h1>
-          <p className="text-subtitle" style={{ marginTop: '0.75rem' }}>
-            BCash Web connects your team, guests, and store owners with the same identity and
-            data model as the React Native app, powered by Clerk and Appwrite.
+
+          <p className="landing-subtitle">
+            An all‑in‑one mobile &amp; web platform for bakery owners. Manage sales, track
+            ingredients, analyze performance, and empower your team — from a single app.
           </p>
 
-          <div style={{ marginTop: '1.3rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <Link to="/auth/sign-up" className="app-btn-primary">
-              Get started – create bakery
+          <div className="landing-cta-row">
+            <Link to="/auth/sign-up" className="app-btn-primary landing-cta-main">
+              Get started free
             </Link>
-            <Link to="/releases" className="app-btn-secondary">
-              View latest releases
+            <Link to="/auth/sign-in" className="app-btn-secondary">
+              Sign in
             </Link>
           </div>
 
-          <div style={{ marginTop: '1.6rem', display: 'grid', gap: '0.9rem' }}>
-            <div>
-              <p className="text-eyebrow">Owners & admins</p>
-              <p className="stacked-list-body" style={{ marginTop: '0.25rem' }}>
-                Use the web dashboard to inspect sales, manage locations, invite staff, and check
-                live status — all backed by Appwrite.
-              </p>
-            </div>
-            <div>
-              <p className="text-eyebrow">Staff & guests</p>
-              <p className="stacked-list-body" style={{ marginTop: '0.25rem' }}>
-                Accept invitations from your phone or laptop, then jump straight into the mobile app
-                via a secure deep link.
-              </p>
-            </div>
-            <div> 
-              <Link to="/privacy" className="app-btn-secondary">
-                Privacy Policy
-              </Link>
-              <Link to="/policy" className="app-btn-secondary">
-                Terms of Service
-              </Link>
-            </div>
+          {/* Feature grid */}
+          <div className="landing-features-grid">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="landing-feature-card">
+                <span className="landing-feature-icon">{f.icon}</span>
+                <div>
+                  <p className="landing-feature-title">{f.title}</p>
+                  <p className="landing-feature-desc">{f.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
 
-        <aside className="page-card page-card-muted">
-          <p className="text-eyebrow">Web + App flow</p>
-          <p className="stacked-list-body" style={{ marginTop: '0.35rem' }}>
-            This site is the public entry point for your bakery organization. Clerk handles
-            authentication, while Appwrite stores your bakeries, orders, and reports.
-          </p>
-          <ul className="invite-steps">
-            <li>Customers and staff follow links sent from BCash.</li>
-            <li>Clerk verifies their identity (email or social providers).</li>
-            <li>
-              The web app deep‑links into the mobile app using the{' '}
-              <code>dashingbakery://</code> scheme.
-            </li>
-            <li>If the app isn&apos;t installed, we fall back to a download or help page.</li>
-          </ul>
+          <div className="landing-legal-links">
+            <Link to="/releases" className="landing-legal-link">📋 Release Notes</Link>
+            <Link to="/privacy" className="landing-legal-link">🔒 Privacy Policy</Link>
+            <Link to="/policy" className="landing-legal-link">📄 Terms of Service</Link>
+          </div>
+        </div>
+      </section>
 
-          <p className="muted-text" style={{ marginTop: '0.9rem' }}>
-            You can customize this copy and link it from your store website or Play Store / App
-            Store listing.
-          </p>
-        </aside>
-      </div>
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="landing-footer">
+        <div className="landing-footer-inner">
+          <div className="landing-footer-brand">
+            <img src={appIconPng} alt="DashingBakery" className="landing-footer-icon" />
+            <span className="landing-footer-name">DashingBakery · BCash</span>
+          </div>
+          <nav className="landing-footer-nav">
+            <Link to="/" className="landing-footer-link">Home</Link>
+            <Link to="/releases" className="landing-footer-link">Releases</Link>
+            <Link to="/privacy" className="landing-footer-link">Privacy</Link>
+            <Link to="/policy" className="landing-footer-link">Terms</Link>
+            <Link to="/dashboard" className="landing-footer-link">Dashboard</Link>
+          </nav>
+          <p className="landing-footer-copy">© {new Date().getFullYear()} DashingBakery. Built with ❤️ using Expo &amp; Appwrite.</p>
+        </div>
+      </footer>
     </div>
   );
 };
-

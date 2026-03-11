@@ -453,8 +453,8 @@ export const DashboardPage = () => {
           <div className="dashboard-card">
             <h3 className="dashboard-card-title">Revenue over time</h3>
             {stats.chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={stats.chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={stats.chartData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
                   <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.4} />
@@ -462,7 +462,7 @@ export const DashboardPage = () => {
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke={MUTED} />
-                  <YAxis tick={{ fontSize: 10 }} stroke={MUTED} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <YAxis tick={{ fontSize: 10 }} stroke={MUTED} width={60} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v) => [Number(v).toLocaleString(), 'Revenue']} labelFormatter={(l) => l} />
                   <Area type="monotone" dataKey="value" stroke={PRIMARY} fill="url(#areaGrad)" strokeWidth={2} />
                   <Line type="monotone" dataKey="value" stroke={PRIMARY} dot={{ r: 3 }} strokeWidth={2} />
@@ -478,10 +478,10 @@ export const DashboardPage = () => {
             <div className="dashboard-card dashboard-card-half">
               <h3 className="dashboard-card-title">Peak selling hours</h3>
               {stats.topHours.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={stats.topHours} layout="vertical" margin={{ top: 4, right: 8, left: 36, bottom: 4 }}>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={stats.topHours} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
                     <XAxis type="number" tick={{ fontSize: 10 }} stroke={MUTED} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} stroke={MUTED} width={32} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} stroke={MUTED} width={40} />
                     <Tooltip formatter={(v) => [Number(v).toLocaleString(), 'Sales']} />
                     <Bar dataKey="value" fill={PRIMARY} radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -495,7 +495,7 @@ export const DashboardPage = () => {
             <div className="dashboard-card dashboard-card-half">
               <h3 className="dashboard-card-title">Payment methods</h3>
               {stats.paymentData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
                     <Pie
                       data={stats.paymentData}
@@ -503,8 +503,8 @@ export const DashboardPage = () => {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
+                      innerRadius={55}
+                      outerRadius={85}
                       paddingAngle={2}
                       label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                     >
@@ -525,7 +525,7 @@ export const DashboardPage = () => {
           {stats.pieCategoryData.length > 0 && (
             <div className="dashboard-card">
               <h3 className="dashboard-card-title">By category</h3>
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={stats.pieCategoryData}
@@ -533,8 +533,8 @@ export const DashboardPage = () => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={90}
+                    innerRadius={60}
+                    outerRadius={100}
                     paddingAngle={2}
                   >
                     {stats.pieCategoryData.map((entry) => (
@@ -556,7 +556,7 @@ export const DashboardPage = () => {
                 {stats.bestSelling.slice(0, 10).map((p, idx) => (
                   <li key={p.id} className="dashboard-list-item">
                     <span className="dashboard-rank">{idx + 1}</span>
-                    <span className="dashboard-list-name">{p.name}</span>
+                    <span className="dashboard-list-name">{p.name && p.name !== 'Unknown' ? p.name : `[ID: ${p.id.slice(-6)}]`}</span>
                     <span className="dashboard-list-meta">
                       {p.qty} sold · {((p.revenue - p.cost) / (p.revenue || 1) * 100).toFixed(0)}% margin
                     </span>
