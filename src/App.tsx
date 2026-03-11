@@ -14,6 +14,7 @@ import { DownloadPage } from './pages/DownloadPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { PolicyPage } from './pages/PolicyPage';
 import './App.css';
+import './pages/dashboard-pro.css';
 
 function NavLink({ to, icon, label, onClick }: { to: string; icon: React.ReactNode; label: string; onClick?: () => void }) {
   const location = useLocation();
@@ -41,49 +42,51 @@ function App() {
   return (
     <div className={`app-root ${mobileMenuOpen ? 'menu-open' : ''} ${isDashboard ? 'is-dashboard-layout' : ''}`}>
       {!isDashboard && (
-        <header className="app-header">
-          <div className="app-header-left">
-            <Link to="/" className="app-logo-pill">
-              <img src={appIcon || "./assets/appIcon/favicon.png"} alt="BCash POS icon" className="app-logo-image" />
-              <span className="app-logo-text-main">BCash</span>
-              <span className="app-logo-text-sub">POS</span>
+        <header className="pro-topbar" style={{ position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--pro-border)' }}>
+          <div className="pro-topbar-left">
+            <Link to="/" className="pro-sidebar-logo" style={{ border: 'none', padding: 0, height: 'auto', textDecoration: 'none' }}>
+              <img src={appIcon || "./assets/appIcon/favicon.png"} alt="Bcash" style={{ width: 32, height: 32, borderRadius: 8 }} />
+              <span style={{ fontSize: 18, color: 'var(--pro-text-main)' }}>BCash POS</span>
             </Link>
-            <span className="app-dev-badge">by Basthdev</span>
           </div>
 
-          <nav className="app-header-nav">
+          <nav className="pro-topbar-left" style={{ flex: 1, justifyContent: 'center' }}>
             {!isSignedIn && (
-              <NavLink to="/" icon={<Home size={14} />} label="Home" />
+              <NavLink to="/" icon={<Home size={16} />} label="Home" />
             )}
-            <NavLink to="/download" icon={<Download size={14} />} label="Download" />
+            <NavLink to="/download" icon={<Download size={16} />} label="Download" />
             {isSignedIn && (
-              <NavLink to="/dashboard" icon={<LayoutDashboard size={14} />} label="Dashboard" />
+              <NavLink to="/dashboard" icon={<LayoutDashboard size={16} />} label="Dashboard" />
             )}
           </nav>
 
-          <div className="app-header-right">
+          <div className="pro-topbar-right">
             {!isSignedIn && (
-              <div className="auth-btns-desktop">
+              <div className="auth-btns-desktop" style={{ display: 'flex', gap: '12px' }}>
                 <SignInButton mode="modal">
-                  <button className="app-btn-secondary" type="button">
+                  <button className="pro-hero-btn" style={{ background: '#f1f5f9', color: '#0f172a' }} type="button">
                     Sign in
                   </button>
                 </SignInButton>
                 <SignUpButton mode="modal">
-                  <button className="app-btn-primary" type="button">
+                  <button className="pro-btn-primary" type="button">
                     Sign up
                   </button>
                 </SignUpButton>
               </div>
             )}
             {isSignedIn && (
-              <UserButton />
+              <div className="pro-user-profile" style={{ gap: '16px' }}>
+                <span className="pro-user-name hide-mobile">Manage Account</span>
+                <UserButton />
+              </div>
             )}
 
             <button
               className="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--pro-text-main)' }}
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useOrganizationList } from '@clerk/react';
+import { useOrganizationList, useUser, UserButton } from '@clerk/react';
 import { Query } from 'appwrite';
 import {
   Area,
@@ -36,6 +36,8 @@ import {
   Smartphone,
   Banknote,
   CreditCard,
+  QrCode,
+  ArrowLeftRight,
 } from 'lucide-react';
 import logoIcon from '../assets/appIcon/splash-icon-transparant.png';
 import './pages.css';
@@ -58,8 +60,6 @@ import { useUserData } from '../lib/useUserData';
 
 const PRIMARY = '#3d7066';
 const SUCCESS = '#22C55E';
-const WARNING = '#EAB308';
-const DANGER = '#EF4444';
 const MUTED = '#8a9e9a';
 
 type SaleHeaderDoc = {
@@ -429,6 +429,7 @@ function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) 
 
 export const DashboardPage = () => {
   const { planId, isPremium, clerkUserId } = useUserData();
+  const { user } = useUser();
   const { userMemberships, isLoaded: orgsLoaded } = useOrganizationList({ userMemberships: true });
   const organizationList = userMemberships?.data ?? [];
   const [activeStoreId, setActiveStoreId] = useState<string | undefined>(undefined);
@@ -883,11 +884,11 @@ export const DashboardPage = () => {
 
             <div className="pro-user-profile">
               <div className="pro-user-info hide-mobile" style={{ textAlign: 'right' }}>
-                <span className="pro-user-name">Owner</span>
+                <span className="pro-user-name">{user?.firstName || 'Owner'}</span>
                 <span className="pro-user-role">{planId.toUpperCase()}</span>
               </div>
-              <div className="pro-avatar">
-                {clerkUserId?.slice(0, 2).toUpperCase() || 'U'}
+              <div style={{ paddingLeft: '8px' }}>
+                <UserButton />
               </div>
             </div>
           </div>
@@ -1038,13 +1039,12 @@ export const DashboardPage = () => {
                             {[...stats.listHeaders].reverse().map(h => (
                               <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
                                 <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                                <td>{(h.status || 'completed').toUpperCase()}</td>
-                                <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
                                 <td>
                                   <span className={`badge-${h.status || 'completed'}`}>
                                     {(h.status || 'completed').toUpperCase()}
                                   </span>
                                 </td>
+                                <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
                                 <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
                                 <td align="right">
                                   <div className="manage-row-actions">
@@ -1215,8 +1215,8 @@ export const DashboardPage = () => {
                       <div className="pro-message-list">
                         {[...stats.listHeaders].reverse().slice(0, 5).map((h: SaleHeaderDoc) => (
                           <div className="pro-msg-item" key={h.$id}>
-                            <div className="pro-msg-avatar" style={{ backgroundColor: pmOf(h) === 'cash' ? '#d1fae5' : '#dbeafe', color: pmOf(h) === 'cash' ? SUCCESS : PRIMARY }}>
-                              {pmOf(h) === 'cash' ? <Banknote size={20} /> : pmOf(h) === 'qris' ? <Smartphone size={20} /> : <CreditCard size={20} />}
+                            <div className="pro-msg-avatar" style={{ backgroundColor: pmOf(h) === 'cash' ? '#d1fae5' : pmOf(h) === 'qris' ? '#dbeafe' : '#dbeafe', color: pmOf(h) === 'cash' ? SUCCESS : pmOf(h) === 'qris' ? PRIMARY : PRIMARY }}>
+                              {pmOf(h) === 'cash' ? <Banknote size={20} /> : pmOf(h) === 'qris' ? <QrCode size={20} /> : <ArrowLeftRight size={20} />}
                             </div>
                             <div className="pro-msg-info">
                               <div className="pro-msg-name">{pmOf(h).toUpperCase()}</div>
@@ -1293,31 +1293,31 @@ export const DashboardPage = () => {
                     </div>
                   </div>
 
-                  <div className="dashboard-kpi-grid">
-                    <div className="dashboard-kpi-card main-kpi">
-                      <span className="kpi-label">Revenue</span>
-                      <span className="kpi-value">Rp{stats.revenue.toLocaleString()}</span>
-                      <div className="kpi-trend">
-                        <TrendingUp size={12} /> {stats.transactionCount} transactions
+                  <div className="dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '24px' }}>
+                    <div className="pro-card main-kpi" style={{ background: 'linear-gradient(135deg, #2a4d46, #3d7066)', color: 'white' }}>
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '13px', opacity: 0.9 }}>Revenue</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '28px', fontWeight: 800, margin: '8px 0' }}>Rp{stats.revenue.toLocaleString()}</span>
+                      <div className="kpi-trend" style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <TrendingUp size={14} /> {stats.transactionCount} transactions
                       </div>
                     </div>
-                    <div className="dashboard-kpi-card">
-                      <span className="kpi-label">Profit</span>
-                      <span className="kpi-value" style={{ color: stats.netProfit >= 0 ? SUCCESS : DANGER }}>
+                    <div className="pro-card">
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '13px', color: '#64748b' }}>Profit</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '24px', fontWeight: 800, margin: '8px 0', color: stats.netProfit >= 0 ? '#10b981' : '#ef4444' }}>
                         Rp{stats.netProfit.toLocaleString()}
                       </span>
-                      <span className="kpi-meta">{stats.margin.toFixed(1)}% margin</span>
+                      <span className="kpi-meta" style={{ fontSize: '13px', color: '#64748b' }}>{stats.margin.toFixed(1)}% margin</span>
                     </div>
-                    <div className="dashboard-kpi-card">
-                      <span className="kpi-label">Avg. Ticket</span>
-                      <span className="kpi-value">Rp{stats.avgTicket.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                      <span className="kpi-meta">per sale</span>
+                    <div className="pro-card">
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '13px', color: '#64748b' }}>Avg. Ticket</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '24px', fontWeight: 800, margin: '8px 0', color: '#1e293b' }}>Rp{stats.avgTicket.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      <span className="kpi-meta" style={{ fontSize: '13px', color: '#64748b' }}>per sale</span>
                     </div>
                   </div>
 
-                  <div className="dashboard-charts-main">
-                    <div className="dashboard-card chart-hero">
-                      <h3 className="dashboard-card-title">Revenue Trend</h3>
+                  <div className="pro-card chart-hero" style={{ marginBottom: '24px' }}>
+                    <h3 className="pro-card-title">Revenue Trend</h3>
+                    <div style={{ marginTop: '20px' }}>
                       <ResponsiveContainer width="100%" height={300}>
                         <AreaChart data={stats.chartData}>
                           <XAxis dataKey="label" stroke={MUTED} fontSize={11} />
@@ -1329,75 +1329,92 @@ export const DashboardPage = () => {
                     </div>
                   </div>
 
-                  <div className="dashboard-charts-row">
-                    <div className="dashboard-card">
-                      <h3 className="dashboard-card-title">Peak Hours</h3>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={stats.topHours}>
-                          <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
-                          <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} />
-                          <Bar dataKey="value" fill={PRIMARY} radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                  <div className="pro-two-col" style={{ marginBottom: '24px' }}>
+                    <div className="pro-card">
+                      <h3 className="pro-card-title">Peak Hours</h3>
+                      <div style={{ marginTop: '20px' }}>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart data={stats.topHours}>
+                            <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
+                            <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} cursor={{ fill: '#f1f5f9' }} />
+                            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                              {stats.topHours.map((_, index) => {
+                                let c = '#94a3b8';
+                                if (index === 0) c = '#10b981';
+                                else if (index === 1) c = '#facc15';
+                                else if (index === 2) c = '#f97316';
+                                else if (index === 3) c = '#ef4444';
+                                return <Cell key={`cell-${index}`} fill={c} />;
+                              })}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
 
-                    <div className="dashboard-card">
-                      <h3 className="dashboard-card-title">Payment Methods</h3>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                          <Pie
-                            data={stats.paymentData}
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {stats.paymentData.map((_, index) => (
-                              <Cell key={index} fill={[PRIMARY, SUCCESS, WARNING, DANGER, MUTED][index % 5]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="pro-card">
+                      <h3 className="pro-card-title">Payment Methods</h3>
+                      <div style={{ marginTop: '20px' }}>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={stats.paymentData}
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {stats.paymentData.map((_, index) => (
+                                <Cell key={index} fill={['#3d7066', '#10b981', '#f59e0b', '#ef4444', '#94a3b8'][index % 5]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="dashboard-two-col">
-                    <div className="dashboard-card">
-                      <h3 className="dashboard-card-title">Best Selling Products</h3>
-                      <div className="prod-list">
+                  <div className="pro-two-col">
+                    <div className="pro-card">
+                      <h3 className="pro-card-title">Best Selling Products</h3>
+                      <div className="prod-list" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {stats.bestSelling.slice(0, 8).map((p, idx) => (
-                          <div key={p.id} className="prod-row">
-                            <div className="prod-rank">{idx + 1}</div>
-                            <div className="prod-info">
-                              <span className="prod-name">{p.name}</span>
-                              <span className="prod-qty">{p.qty} sold</span>
+                          <div key={p.id} className="prod-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div className="prod-rank" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, color: '#475569' }}>{idx + 1}</div>
+                              <div className="prod-info" style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span className="prod-name" style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b' }}>{p.name}</span>
+                                <span className="prod-qty" style={{ fontSize: '12px', color: '#64748b' }}>{p.qty} sold</span>
+                              </div>
                             </div>
-                            <div className="prod-revenue">Rp{p.revenue.toLocaleString()}</div>
+                            <div className="prod-revenue" style={{ fontWeight: 800, color: '#3d7066' }}>Rp{p.revenue.toLocaleString()}</div>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="dashboard-card">
-                      <h3 className="dashboard-card-title">Distribution</h3>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={stats.categoryData}
-                            dataKey="revenue"
-                            nameKey="name"
-                            innerRadius={60}
-                            outerRadius={90}
-                          >
-                            {stats.categoryData.map((entry, index) => (
-                              <Cell key={index} fill={entry.color || PRIMARY} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="pro-card">
+                      <h3 className="pro-card-title">Distribution</h3>
+                      <div style={{ marginTop: '20px' }}>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={stats.categoryData}
+                              dataKey="revenue"
+                              nameKey="name"
+                              innerRadius={60}
+                              outerRadius={90}
+                            >
+                              {stats.categoryData.map((entry, index) => (
+                                <Cell key={index} fill={entry.color || PRIMARY} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 </div>
