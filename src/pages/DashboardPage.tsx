@@ -53,6 +53,7 @@ import {
   salesCollectionId,
   ingredientsCollectionId,
   recipesCollectionId,
+  recipeLinesCollectionId,
   stockAdjustmentsCollectionId,
   bucketId,
   storage,
@@ -120,6 +121,13 @@ type RecipeDoc = {
   yield?: number;
   overheadPercent?: number;
 };
+type RecipeLineDoc = {
+  $id: string;
+  recipeId: string;
+  ingredientId: string;
+  quantity: number;
+  unit?: string;
+};
 type StockAdjustmentDoc = {
   $id: string;
   ingredientId: string;
@@ -164,9 +172,10 @@ type ModalProps = {
   recipes: RecipeDoc[];
   allProducts: ProductDoc[];
   loading: boolean;
+  getRecipeCost: (recipeId: string) => number;
 };
 
-const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, allProducts, loading }) => {
+const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, allProducts, loading, getRecipeCost }) => {
   const [formData, setFormData] = useState<any>(initialData || {});
   const [showGallery, setShowGallery] = useState(false);
 
@@ -229,18 +238,6 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                     </select>
                   </div>
                   <div className="form-row">
-                    {!formData.usesRecipe && (
-                      <div className="form-group">
-                        <label>HPP / Cost (Rp)</label>
-                        <input
-                          type="number"
-                          required={!formData.usesRecipe}
-                          value={formData.cost || ''}
-                          onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
-                          placeholder="8000"
-                        />
-                      </div>
-                    )}
                     <div className="form-group">
                       <label>Price (Rp)</label>
                       <input
@@ -309,19 +306,56 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                   </div>
 
                   {formData.usesRecipe && (
-                    <div className="form-group" style={{ marginTop: '1rem' }}>
-                      <label>Link to Recipe</label>
-                      <select
-                        required={formData.usesRecipe}
-                        value={formData.recipeId || ''}
-                        onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
-                      >
-                        <option value="">Select Recipe</option>
-                        {recipes.map((r) => (
-                          <option key={r.$id} value={r.$id}>{r.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <>
+                      <div className="form-group" style={{ marginTop: '1rem' }}>
+                        <label>Link to Recipe</label>
+                        <select
+                          required={formData.usesRecipe}
+                          value={formData.recipeId || ''}
+                          onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
+                        >
+                          <option value="">Select Recipe</option>
+                          {recipes.map((r) => (
+                            <option key={r.$id} value={r.$id}>{r.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {formData.recipeId && (
+                        <div className="hpp-preview" style={{ 
+                          marginTop: '1rem', 
+                          backgroundColor: '#f8fafc', 
+                          padding: '1rem', 
+                          borderRadius: '12px', 
+                          border: '1px solid #e2e8f0' 
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b' }}>HPP Price =</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e293b' }}>
+                              Rp{getRecipeCost(formData.recipeId).toLocaleString()}
+                            </span>
+                          </div>
+                          {formData.price && parseFloat(formData.price) > 0 && (() => {
+                            const hpp = getRecipeCost(formData.recipeId);
+                            const price = parseFloat(formData.price);
+                            const profit = price - hpp;
+                            const margin = price > 0 ? (profit / price) * 100 : 0;
+                            return (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b' }}>Profit =</span>
+                                <span style={{ 
+                                  fontSize: '0.875rem', 
+                                  fontWeight: '700', 
+                                  color: margin >= 30 ? '#22C55E' : '#f59e0b' 
+                                }}>
+                                  Rp{profit.toLocaleString()} ({margin.toFixed(1)}%)
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -529,6 +563,7 @@ export const DashboardPage = () => {
   const [expenses, setExpenses] = useState<ExpenseDoc[]>([]);
   const [ingredients, setIngredients] = useState<IngredientDoc[]>([]);
   const [recipes, setRecipes] = useState<RecipeDoc[]>([]);
+  const [recipeLines, setRecipeLines] = useState<RecipeLineDoc[]>([]);
   const [stockAdjustments, setStockAdjustments] = useState<StockAdjustmentDoc[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -537,6 +572,27 @@ export const DashboardPage = () => {
   const [showModal, setShowModal] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formLoading, setFormLoading] = useState(false);
+
+  // HPP Calculation Function
+  const getRecipeCost = (recipeId: string): number => {
+    const recipe = recipes.find((r: RecipeDoc) => r.$id === recipeId);
+    if (!recipe) return 0;
+
+    const lines = recipeLines.filter((rl: RecipeLineDoc) => rl.recipeId === recipeId);
+    const materialCost = lines.reduce((acc, line) => {
+      const ingredient = ingredients.find((ing: IngredientDoc) => ing.$id === line.ingredientId);
+      if (!ingredient) return acc;
+      // Convert to base unit and calculate cost
+      const baseQty = line.quantity; // Simplified - assuming line.quantity is already in base units
+      const unitCost = ingredient.costPerUnit || 0;
+      return acc + (baseQty * unitCost);
+    }, 0);
+
+    const yieldQty = Math.max(recipe.yield || 1, 1);
+    const overheadMultiplier = 1 + (recipe.overheadPercent || 0) / 100;
+
+    return (materialCost * overheadMultiplier) / yieldQty;
+  };
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -637,7 +693,7 @@ export const DashboardPage = () => {
       const tenant = tenantQueries(clerkUserId, activeStoreId);
 
       try {
-        const [headers, items, prods, cats, exps, ings, recs, stocks] = await Promise.all([
+        const [headers, items, prods, cats, exps, ings, recs, recipeLs, stocks] = await Promise.all([
           list<SaleHeaderDoc>(salesCollectionId, [
             Query.greaterThanEqual('timestamp', new Date(startTs).toISOString()),
             Query.lessThanEqual('timestamp', new Date(endTs).toISOString()),
@@ -649,6 +705,7 @@ export const DashboardPage = () => {
           list<ExpenseDoc>(expensesCollectionId, [...tenant]),
           isPremium ? list<IngredientDoc>(ingredientsCollectionId, [...tenant]) : Promise.resolve([]),
           isPremium ? list<RecipeDoc>(recipesCollectionId, [...tenant]) : Promise.resolve([]),
+          isPremium ? list<RecipeLineDoc>(recipeLinesCollectionId, [...tenant]) : Promise.resolve([]),
           isPremium ? list<StockAdjustmentDoc>(stockAdjustmentsCollectionId, [...tenant]) : Promise.resolve([]),
         ]);
         setSaleHeaders(headers);
@@ -658,6 +715,7 @@ export const DashboardPage = () => {
         setExpenses(exps);
         setIngredients(ings);
         setRecipes(recs);
+        setRecipeLines(recipeLs);
         setStockAdjustments(stocks);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load data');
@@ -698,6 +756,7 @@ export const DashboardPage = () => {
         else if (collectionId === categoriesCollectionId) setCategories(handler);
         else if (collectionId === ingredientsCollectionId) setIngredients(handler);
         else if (collectionId === recipesCollectionId) setRecipes(handler);
+        else if (collectionId === recipeLinesCollectionId) setRecipeLines(handler);
         else if (collectionId === salesCollectionId) setSaleHeaders(handler);
         else if (collectionId === saleItemsCollectionId) setSaleItems(handler);
         else if (collectionId === expensesCollectionId) setExpenses(handler);
@@ -1733,6 +1792,7 @@ export const DashboardPage = () => {
               recipes={recipes}
               allProducts={products}
               loading={formLoading}
+              getRecipeCost={getRecipeCost}
             />
           )}
 
