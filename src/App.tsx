@@ -1,7 +1,7 @@
 import { Route, Routes, Navigate, Link, useLocation } from 'react-router-dom';
 import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/react';
 import { LayoutDashboard, Home, Download } from 'lucide-react';
-import appIcon from './assets/appIcon.svg';
+import appIcon from './assets/appIcon/icon.png';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
 import { SignUpPage } from './pages/auth/SignUpPage';

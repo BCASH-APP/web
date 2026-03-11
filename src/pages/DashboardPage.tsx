@@ -422,28 +422,28 @@ export const DashboardPage = () => {
                 <div className="dashboard-card action-section">
                   <h3 className="dashboard-card-title">Quick Access</h3>
                   <div className="web-action-grid">
-                    <div className="web-action-card primary">
+                    <div className="web-action-card primary" onClick={() => alert('Opening Cashier...')}>
                       <div className="action-icon"><Plus size={20} /></div>
                       <div className="action-info">
                         <span className="action-label">New Sale</span>
                         <span className="action-sub">Record a sale</span>
                       </div>
                     </div>
-                    <div className="web-action-card">
+                    <div className="web-action-card" onClick={() => alert('Opening Sales Report...')}>
                       <div className="action-icon"><ShoppingBag size={20} /></div>
                       <div className="action-info">
                         <span className="action-label">Today Sold</span>
                         <span className="action-sub">Check items sold</span>
                       </div>
                     </div>
-                    <div className="web-action-card">
+                    <div className="web-action-card" onClick={() => alert('Opening Products...')}>
                       <div className="action-icon"><ShoppingBasket size={20} /></div>
                       <div className="action-info">
                         <span className="action-label">Products</span>
                         <span className="action-sub">Manage items</span>
                       </div>
                     </div>
-                    <div className="web-action-card">
+                    <div className="web-action-card" onClick={() => alert('Opening Categories...')}>
                       <div className="action-icon"><Tags size={20} /></div>
                       <div className="action-info">
                         <span className="action-label">Categories</span>
