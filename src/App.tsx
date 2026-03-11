@@ -36,86 +36,92 @@ function App() {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  const isDashboard = location.pathname.startsWith('/dashboard');
+
   return (
-    <div className={`app-root ${mobileMenuOpen ? 'menu-open' : ''}`}>
-      <header className="app-header">
-        <div className="app-header-left">
-          <Link to="/" className="app-logo-pill">
-            <img src={appIcon || "./assets/appIcon/favicon.png"} alt="BCash POS icon" className="app-logo-image" />
-            <span className="app-logo-text-main">BCash</span>
-            <span className="app-logo-text-sub">POS</span>
-          </Link>
-          <span className="app-dev-badge">by Basthdev</span>
-        </div>
+    <div className={`app-root ${mobileMenuOpen ? 'menu-open' : ''} ${isDashboard ? 'is-dashboard-layout' : ''}`}>
+      {!isDashboard && (
+        <header className="app-header">
+          <div className="app-header-left">
+            <Link to="/" className="app-logo-pill">
+              <img src={appIcon || "./assets/appIcon/favicon.png"} alt="BCash POS icon" className="app-logo-image" />
+              <span className="app-logo-text-main">BCash</span>
+              <span className="app-logo-text-sub">POS</span>
+            </Link>
+            <span className="app-dev-badge">by Basthdev</span>
+          </div>
 
-        <nav className="app-header-nav">
-          {!isSignedIn && (
-            <NavLink to="/" icon={<Home size={14} />} label="Home" />
-          )}
-          <NavLink to="/download" icon={<Download size={14} />} label="Download" />
-          {isSignedIn && (
-            <NavLink to="/dashboard" icon={<LayoutDashboard size={14} />} label="Dashboard" />
-          )}
-        </nav>
+          <nav className="app-header-nav">
+            {!isSignedIn && (
+              <NavLink to="/" icon={<Home size={14} />} label="Home" />
+            )}
+            <NavLink to="/download" icon={<Download size={14} />} label="Download" />
+            {isSignedIn && (
+              <NavLink to="/dashboard" icon={<LayoutDashboard size={14} />} label="Dashboard" />
+            )}
+          </nav>
 
-        <div className="app-header-right">
-          {!isSignedIn && (
-            <div className="auth-btns-desktop">
-              <SignInButton mode="modal">
-                <button className="app-btn-secondary" type="button">
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="app-btn-primary" type="button">
-                  Sign up
-                </button>
-              </SignUpButton>
-            </div>
-          )}
-          {isSignedIn && (
-            <UserButton />
-          )}
+          <div className="app-header-right">
+            {!isSignedIn && (
+              <div className="auth-btns-desktop">
+                <SignInButton mode="modal">
+                  <button className="app-btn-secondary" type="button">
+                    Sign in
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="app-btn-primary" type="button">
+                    Sign up
+                  </button>
+                </SignUpButton>
+              </div>
+            )}
+            {isSignedIn && (
+              <UserButton />
+            )}
 
-          <button
-            className="mobile-menu-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </header>
+            <button
+              className="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Mobile Drawer */}
-      <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
-        <nav className="mobile-nav">
-          {!isSignedIn && (
-            <NavLink to="/" icon={<Home size={18} />} label="Home" />
-          )}
-          <NavLink to="/download" icon={<Download size={18} />} label="Download" />
-          {isSignedIn && (
-            <NavLink to="/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
-          )}
+      {!isDashboard && (
+        <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
+          <nav className="mobile-nav">
+            {!isSignedIn && (
+              <NavLink to="/" icon={<Home size={18} />} label="Home" />
+            )}
+            <NavLink to="/download" icon={<Download size={18} />} label="Download" />
+            {isSignedIn && (
+              <NavLink to="/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
+            )}
 
-          {!isSignedIn && (
-            <div className="mobile-auth-section">
-              <SignInButton mode="modal">
-                <button className="app-btn-secondary mobile-btn" type="button">
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="app-btn-primary mobile-btn" type="button">
-                  Sign up
-                </button>
-              </SignUpButton>
-            </div>
-          )}
-        </nav>
-      </div>
+            {!isSignedIn && (
+              <div className="mobile-auth-section">
+                <SignInButton mode="modal">
+                  <button className="app-btn-secondary mobile-btn" type="button">
+                    Sign in
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="app-btn-primary mobile-btn" type="button">
+                    Sign up
+                  </button>
+                </SignUpButton>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
 
-      <main className="app-main">
+      <main className={`app-main ${isDashboard ? 'dashboard-mode' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/download" element={<DownloadPage />} />
@@ -131,14 +137,16 @@ function App() {
         </Routes>
       </main>
 
-      <footer className="app-footer">
-        <span>© {new Date().getFullYear()} <strong>Basthdev</strong> · BCash POS System</span>
-        <nav className="app-footer-nav">
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/policy">Terms</Link>
-          <Link to="/download">Download</Link>
-        </nav>
-      </footer>
+      {!isDashboard && (
+        <footer className="app-footer">
+          <span>© {new Date().getFullYear()} <strong>Basthdev</strong> · BCash POS System</span>
+          <nav className="app-footer-nav">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/policy">Terms</Link>
+            <Link to="/download">Download</Link>
+          </nav>
+        </footer>
+      )}
     </div>
   );
 }

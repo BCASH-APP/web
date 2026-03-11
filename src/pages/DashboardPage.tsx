@@ -28,7 +28,6 @@ import {
   History,
   ChevronRight,
   Search,
-  ArrowLeft,
   Plus,
   Users,
   Edit2,
@@ -37,6 +36,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import './pages.css';
+import './dashboard-pro.css';
 import {
   categoriesCollectionId,
   expensesCollectionId,
@@ -793,90 +793,97 @@ export const DashboardPage = () => {
   const storeName = organizationList.find((m) => m.organization.id === activeStoreId)?.organization.name || 'Store';
 
   return (
-    <div className="dashboard-app-shell">
-      <aside className="dashboard-sidebar">
-        <div className="sidebar-logo">
-          <img src="/bcash-web/src/assets/appIcon/splash-icon-transparant.png" alt="Bcash" className="sidebar-logo-img" />
-          <span className="sidebar-brand">BCash POS</span>
+    <div className="pro-dashboard-shell">
+      <aside className="pro-sidebar">
+        <div className="pro-sidebar-logo">
+          <img src="/bcash-web/src/assets/appIcon/splash-icon-transparant.png" alt="Bcash" style={{ width: 32, height: 32 }} />
+          <span>BCash POS</span>
         </div>
         
-        <nav className="sidebar-nav">
-          <div className="nav-group">
-            <span className="nav-group-title">MAIN MENU</span>
-            <button className={`nav-item ${activeTab === 'home' && !managementView ? 'active' : ''}`} onClick={() => { setActiveTab('home'); setManagementView(null); }}>
-              <LayoutDashboard size={18} /> Home
+        <nav className="pro-sidebar-nav">
+          <div className="nav-group" style={{ marginBottom: 24 }}>
+            <span className="nav-group-title" style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: 1, paddingLeft: 20, marginBottom: 8, display: 'block' }}>MAIN MENU</span>
+            <button className={`pro-nav-item ${activeTab === 'home' && !managementView ? 'active' : ''}`} onClick={() => { setActiveTab('home'); setManagementView(null); }}>
+              <LayoutDashboard size={20} /> Dashboard
             </button>
             {hasAnalyticsAccess && (
-              <button className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); setManagementView(null); }}>
-                <BarChart2 size={18} /> Analytics
+              <button className={`pro-nav-item ${activeTab === 'analytics' && !managementView ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); setManagementView(null); }}>
+                <BarChart2 size={20} /> Analytics
               </button>
             )}
           </div>
 
           <div className="nav-group">
-            <span className="nav-group-title">MANAGE</span>
-            <button className={`nav-item ${managementView === 'products' ? 'active' : ''}`} onClick={() => setManagementView('products')}>
-              <ShoppingBag size={18} /> Products
+            <span className="nav-group-title" style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: 1, paddingLeft: 20, marginBottom: 8, display: 'block' }}>MANAGE</span>
+            <button className={`pro-nav-item ${managementView === 'products' ? 'active' : ''}`} onClick={() => setManagementView('products')}>
+              <ShoppingBag size={20} /> Products
             </button>
-            <button className={`nav-item ${managementView === 'categories' ? 'active' : ''}`} onClick={() => setManagementView('categories')}>
-              <Tags size={18} /> Categories
+            <button className={`pro-nav-item ${managementView === 'categories' ? 'active' : ''}`} onClick={() => setManagementView('categories')}>
+              <Tags size={20} /> Categories
             </button>
-            <button className={`nav-item ${managementView === 'ingredients' ? 'active' : ''}`} onClick={() => setManagementView('ingredients')}>
-              <Package size={18} /> Ingredients
+            <button className={`pro-nav-item ${managementView === 'ingredients' ? 'active' : ''}`} onClick={() => setManagementView('ingredients')}>
+              <Package size={20} /> Ingredients
             </button>
-            <button className={`nav-item ${managementView === 'recipes' ? 'active' : ''}`} onClick={() => setManagementView('recipes')}>
-              <Utensils size={18} /> Recipes
+            <button className={`pro-nav-item ${managementView === 'recipes' ? 'active' : ''}`} onClick={() => setManagementView('recipes')}>
+              <Utensils size={20} /> Recipes
             </button>
-            <button className={`nav-item ${managementView === 'transactions' ? 'active' : ''}`} onClick={() => setManagementView('transactions')}>
-              <History size={18} /> Transactions
+            <button className={`pro-nav-item ${managementView === 'transactions' ? 'active' : ''}`} onClick={() => setManagementView('transactions')}>
+              <History size={20} /> Transactions
             </button>
             {isPremium && (
-              <button className={`nav-item ${managementView === 'staff' ? 'active' : ''}`} onClick={() => setManagementView('staff')}>
-                <Users size={18} /> Staff
+              <button className={`pro-nav-item ${managementView === 'staff' ? 'active' : ''}`} onClick={() => setManagementView('staff')}>
+                <Users size={20} /> Staff
               </button>
             )}
           </div>
         </nav>
 
-        <div className="sidebar-footer">
-          <div className="user-pill">
-            <div className="user-avatar text-sm font-bold">{clerkUserId?.slice(0, 2).toUpperCase() || 'U'}</div>
-            <div className="user-info">
-              <span className="user-name">Manager</span>
-              <span className="user-plan badge-premium">{planId.toUpperCase()}</span>
-            </div>
-          </div>
+        <div className="pro-sidebar-footer">
+          {/* We hide the original pill style here entirely and rely on the new top right user profile. 
+              But for now, keep something subtle if needed or just remove. */}
         </div>
       </aside>
 
-      <main className="dashboard-main-area">
-        <header className="dashboard-topbar">
-          <div className="topbar-left">
-            <h1 className="topbar-title">
-              {managementView ? managementView.charAt(0).toUpperCase() + managementView.slice(1) : (activeTab === 'home' ? 'Dashboard Summary' : 'Analytics & Reports')}
+      <main className="pro-main">
+        <header className="pro-topbar">
+          <div className="pro-topbar-left">
+            <h1 className="pro-topbar-title">
+              {managementView ? managementView.charAt(0).toUpperCase() + managementView.slice(1) : (activeTab === 'home' ? 'Dashboard' : 'Analytics')}
             </h1>
+            <div className="pro-search-bar hide-mobile">
+               <Search size={18} color="#94a3b8" />
+               <input type="text" placeholder="Search here..." />
+            </div>
           </div>
           
-          <div className="topbar-right">
-            <div className="topbar-actions-row">
-              <div className="dashboard-org-pill">
-                <span className="org-label">Store</span>
-                <select className="org-select" value={activeStoreId} onChange={(e) => setActiveStoreId(e.target.value)}>
-                  {organizationList.map((m) => (
-                    <option key={m.organization.id} value={m.organization.id}>
-                      {m.organization.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <a href="dashingbakery://" className="open-app-btn" title="Open BCash App">
-                <Smartphone size={16} /> <span className="hide-mobile">Open App</span>
-              </a>
+          <div className="pro-topbar-right">
+            <a href="dashingbakery://" className="pro-store-pill" style={{ textDecoration: 'none' }} title="Open BCash App">
+              <Smartphone size={16} color="#2563eb" /> <span className="hide-mobile">Open App</span>
+            </a>
+            <div className="pro-store-pill">
+              <span className="org-label" style={{ color: '#94a3b8' }}>Store</span>
+              <select onChange={(e) => setActiveStoreId(e.target.value)} value={activeStoreId}>
+                {organizationList.map((m) => (
+                  <option key={m.organization.id} value={m.organization.id}>
+                    {m.organization.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="pro-user-profile">
+               <div className="pro-user-info hide-mobile" style={{ textAlign: 'right' }}>
+                  <span className="pro-user-name">Owner</span>
+                  <span className="pro-user-role">{planId.toUpperCase()}</span>
+               </div>
+               <div className="pro-avatar">
+                 {clerkUserId?.slice(0, 2).toUpperCase() || 'U'}
+               </div>
             </div>
           </div>
         </header>
 
-        <div className="dashboard-scrollable-content">
+        <div className="pro-content">
 
       {error && <div className="dashboard-error-banner" style={{ marginBottom: '1.5rem' }}><AlertCircle size={16} /> {error}</div>}
 
@@ -886,27 +893,22 @@ export const DashboardPage = () => {
         <>
 
           {managementView ? (
-            <div className="management-view-container">
-              <header className="management-view-header">
-                <button className="back-btn" onClick={() => setManagementView(null)} title="Back to Dashboard">
-                  <ArrowLeft size={18} /> <span className="hide-mobile">Back to Dashboard</span>
-                </button>
-                <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
-                {(managementView === 'products' || managementView === 'categories') && (
-                  <button className="app-btn-primary add-item-btn" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
-                    <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
-                  </button>
-                )}
-              </header>
-              
-              <div className="management-list-card page-card">
+            <div className="pro-manage-container">
                 {managementView === 'products' ? (
-                  <div className="manage-list-items">
-                    <div className="manage-list-info">
-                      <span>Total: {products.length} items</span>
+                  <>
+                    <div className="pro-manage-header">
+                      <div>
+                        <h2 className="pro-manage-title">Products</h2>
+                        <span style={{ fontSize: 13, color: '#64748b' }}>Total: {products.length} items</span>
+                      </div>
+                      <div className="pro-manage-actions">
+                        <button className="pro-btn-primary" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
+                          <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="dashboard-table-wrap">
-                      <table className="dashboard-table">
+                    <div className="pro-table-scroll">
+                      <table className="pro-table">
                         <thead>
                           <tr>
                             <th>Name</th>
@@ -958,14 +960,22 @@ export const DashboardPage = () => {
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </>
                 ) : managementView === 'categories' ? (
-                  <div className="manage-list-items">
-                    <div className="manage-list-info">
-                      <span>Total: {categories.length} categories</span>
+                  <>
+                    <div className="pro-manage-header">
+                      <div>
+                        <h2 className="pro-manage-title">Categories</h2>
+                        <span style={{ fontSize: 13, color: '#64748b' }}>Total: {categories.length} items</span>
+                      </div>
+                      <div className="pro-manage-actions">
+                        <button className="pro-btn-primary" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
+                          <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="dashboard-table-wrap">
-                      <table className="dashboard-table">
+                    <div className="pro-table-scroll">
+                      <table className="pro-table">
                         <thead>
                           <tr>
                             <th>Name</th>
@@ -994,14 +1004,17 @@ export const DashboardPage = () => {
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </>
                 ) : managementView === 'transactions' ? (
-                  <div className="manage-list-items">
-                    <div className="manage-list-info">
-                      <span>Total: {stats.listHeaders.length} sales</span>
+                  <>
+                    <div className="pro-manage-header">
+                      <div>
+                        <h2 className="pro-manage-title">Transactions</h2>
+                        <span style={{ fontSize: 13, color: '#64748b' }}>Total: {stats.listHeaders.length} sales</span>
+                      </div>
                     </div>
-                    <div className="dashboard-table-wrap">
-                      <table className="dashboard-table">
+                    <div className="pro-table-scroll">
+                      <table className="pro-table">
                         <thead>
                           <tr>
                             <th>Date</th>
@@ -1036,14 +1049,17 @@ export const DashboardPage = () => {
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </>
                 ) : managementView === 'staff' ? (
-                  <div className="manage-list-items">
-                    <div className="manage-list-info">
-                      <span>Active Team Members</span>
+                  <>
+                    <div className="pro-manage-header">
+                      <div>
+                        <h2 className="pro-manage-title">Staff Members</h2>
+                        <span style={{ fontSize: 13, color: '#64748b' }}>Total: {organizationList.length} members</span>
+                      </div>
                     </div>
-                    <div className="dashboard-table-wrap">
-                      <table className="dashboard-table">
+                    <div className="pro-table-scroll">
+                      <table className="pro-table">
                         <thead>
                           <tr>
                             <th>Name</th>
@@ -1075,182 +1091,159 @@ export const DashboardPage = () => {
                         </tbody>
                       </table>
                     </div>
-                    <div className="manage-list-footer">
-                      <p className="staff-help">To add or remove staff, please use the <a href="https://clerk.com" target="_blank" rel="noopener noreferrer">Clerk Organization Dashboard</a></p>
+                    <div style={{ padding: 24, textAlign: 'center' }}>
+                      <p style={{ fontSize: 13, color: '#64748b' }}>To add or remove staff, please use the <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontWeight: 600 }}>Clerk Organization Dashboard</a></p>
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  <div className="management-empty-state">
+                  <div className="pro-empty-state">
                     {(managementView === 'ingredients' || managementView === 'recipes') ? (
-                      <>
-                        <Smartphone size={48} className="empty-icon-large" />
-                        <h3>Mobile Exclusive Feature</h3>
-                        <p>Managing {managementView} is currently only available through our mobile application. 
-                           Please use the BCash app to manage your stock, cost of goods, and recipes.</p>
-                        <div className="empty-actions">
-                          <a href="dashingbakery://" className="open-app-btn large">
+                      <div style={{ padding: 40, background: '#ffffff', borderRadius: 24, boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'center' }}>
+                        <Smartphone size={64} color="#cbd5e1" strokeWidth={1.5} style={{ marginBottom: 24 }} />
+                        <h3 style={{ fontSize: 24, fontWeight: 700, color: '#0f172a', margin: '0 0 12px 0' }}>Mobile Exclusive Feature</h3>
+                        <p style={{ maxWidth: 480, margin: '0 0 32px 0', lineHeight: 1.6, color: '#64748b' }}>
+                           Managing {managementView} is currently only available through our mobile application. 
+                           Please use the BCash app to manage your stock, cost of goods, and recipes.
+                        </p>
+                        <div style={{ display: 'flex', gap: 16 }}>
+                          <a href="dashingbakery://" className="pro-btn-primary" style={{ textDecoration: 'none' }}>
                             <Smartphone size={18} /> Open BCash App
                           </a>
-                          <button className="app-btn-neutral" onClick={() => setManagementView(null)}>Back to Dashboard</button>
                         </div>
-                      </>
+                      </div>
                     ) : (
-                      <>
-                        <Search size={32} className="empty-icon" />
-                        <p>Managing {managementView} is currently being synchronized...</p>
-                        <button className="app-btn-secondary" onClick={() => setManagementView(null)}>Go Back</button>
-                      </>
+                      <div style={{ padding: 40, background: '#ffffff', borderRadius: 24, boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'center' }}>
+                        <Search size={64} color="#cbd5e1" strokeWidth={1.5} style={{ marginBottom: 24 }} />
+                        <p style={{ fontSize: 16, color: '#64748b' }}>Managing {managementView} is currently being synchronized...</p>
+                      </div>
                     )}
                   </div>
                 )}
-              </div>
             </div>
           ) : activeTab === 'home' ? (
-            <div className="dashboard-mobile-parity">
-              <>
-                <div className="mobile-parity-card">
-                  <div className="mobile-card-pattern" />
-                  <div className="mobile-card-header">
-                    <span className="mobile-card-subtitle">Today's Revenue</span>
-                    <span className="mobile-card-org">{storeName}</span>
+            <div className="pro-home-grid">
+              <div className="pro-home-left">
+                <div className="pro-hero-card">
+                  <div className="pro-hero-content">
+                    <h2>Welcome to the best<br/>management experience.</h2>
+                    <p>Track everything from products to detailed analytics in real-time. {storeName} makes it easy.</p>
+                    <button className="pro-hero-btn" onClick={() => setManagementView('products')}>Manage Products</button>
                   </div>
-                  <h2 className="mobile-card-revenue">Rp{stats.todayRevenue.toLocaleString()}</h2>
-                  <div className="mobile-card-stats">
-                    <div className="mobile-stat">
-                      <span className="mobile-stat-label">Transactions</span>
-                      <span className="mobile-stat-val">{stats.todaySalesCount}</span>
-                    </div>
-                    <div className="mobile-stat-divider" />
-                    <div className="mobile-stat">
-                      <span className="mobile-stat-label">Total Revenue</span>
-                      <span className="mobile-stat-val">Rp{(stats.revenue / 1000).toFixed(0)}k</span>
-                    </div>
+                  <div className="pro-hero-decor">
+                    <Smartphone size={80} color="rgba(255,255,255,0.4)" strokeWidth={1} />
                   </div>
                 </div>
 
-                <div className="dashboard-content-grid">
-                  <div className="dashboard-card action-section manage-store-card">
-                    <div className="card-header-with-action">
-                      <h3 className="dashboard-card-title">Manage Store</h3>
-                      <span className="manage-badge">MANAGEMENT SYSTEM</span>
+                <div className="pro-card">
+                  <div className="pro-card-header">
+                    <h3 className="pro-card-title">Total Revenue</h3>
+                    <span style={{ fontSize: 13, color: '#64748b' }}>Today: Rp{(stats.todayRevenue / 1000).toFixed(0)}k</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <AreaChart data={stats.chartData || []}>
+                      <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
+                      <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
+                      <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#eff6ff" strokeWidth={3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="pro-two-col">
+                  <div className="pro-card">
+                    <div className="pro-card-header">
+                       <h3 className="pro-card-title">Status</h3>
+                       <span style={{ fontSize: 12, color: '#94a3b8' }}>Payment Types</span>
                     </div>
-                    <div className="manage-grid">
-                      <div className="manage-item" onClick={() => setManagementView('products')}>
-                        <div className="manage-icon prods"><ShoppingBag size={22} /></div>
-                        <div className="manage-text">
-                          <span className="manage-label">Products</span>
-                          <span className="manage-desc">Add, Edit & Remove items</span>
+                    <ResponsiveContainer width="100%" height={160}>
+                       <PieChart>
+                         <Pie data={stats.paymentData} innerRadius={50} outerRadius={70} dataKey="value" stroke="none">
+                           {stats.paymentData.map((_, index) => <Cell key={index} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />)}
+                         </Pie>
+                         <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
+                       </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 16 }}>
+                        <div style={{ textAlign: 'center' }}>
+                           <div style={{ color: '#10b981', fontSize: 10, fontWeight: 700 }}>● CASH</div>
+                           <div style={{ fontSize: 14, fontWeight: 700 }}>{stats.paymentData.find(x => x.name.toLowerCase() === 'cash')?.value ? Math.round((stats.paymentData.find(x => x.name.toLowerCase() === 'cash')!.value / Math.max(stats.revenue, 1)) * 100) : 0}%</div>
                         </div>
-                        <ChevronRight size={16} className="manage-arrow" />
-                      </div>
-                      
-                      <div className="manage-item" onClick={() => setManagementView('categories')}>
-                        <div className="manage-icon cats"><Tags size={22} /></div>
-                        <div className="manage-text">
-                          <span className="manage-label">Categories</span>
-                          <span className="manage-desc">Organize your menu</span>
+                        <div style={{ textAlign: 'center' }}>
+                           <div style={{ color: '#3b82f6', fontSize: 10, fontWeight: 700 }}>● QRIS</div>
+                           <div style={{ fontSize: 14, fontWeight: 700 }}>{stats.paymentData.find(x => x.name.toLowerCase() === 'qris')?.value ? Math.round((stats.paymentData.find(x => x.name.toLowerCase() === 'qris')!.value / Math.max(stats.revenue, 1)) * 100) : 0}%</div>
                         </div>
-                        <ChevronRight size={16} className="manage-arrow" />
-                      </div>
-
-                      <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('ingredients')}>
-                        <div className="manage-icon ings"><Package size={22} /></div>
-                        <div className="manage-text">
-                          <div className="manage-label-row">
-                            <span className="manage-label">Ingredients</span>
-                            {!isPremium && <Lock size={12} className="lock-inline" />}
-                          </div>
-                          <span className="manage-desc">Track raw materials</span>
-                        </div>
-                        {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
-                      </div>
-
-                      <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('recipes')}>
-                        <div className="manage-icon recs"><Utensils size={22} /></div>
-                        <div className="manage-text">
-                          <div className="manage-label-row">
-                            <span className="manage-label">Recipes</span>
-                            {!isPremium && <Lock size={12} className="lock-inline" />}
-                          </div>
-                          <span className="manage-desc">HPP & Stock auto-deduct</span>
-                        </div>
-                        {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
-                      </div>
-
-                      <div className="manage-item" onClick={() => setManagementView('transactions')}>
-                        <div className="manage-icon trans"><History size={22} /></div>
-                        <div className="manage-text">
-                          <span className="manage-label">Transactions</span>
-                          <span className="manage-desc">Cancel & Detail sales</span>
-                        </div>
-                        <ChevronRight size={16} className="manage-arrow" />
-                      </div>
-
-                      <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('staff')}>
-                        <div className="manage-icon staff"><Users size={22} /></div>
-                        <div className="manage-text">
-                          <div className="manage-label-row">
-                            <span className="manage-label">Staff Management</span>
-                            {!isPremium && <Lock size={12} className="lock-inline" />}
-                          </div>
-                          <span className="manage-desc">{isPremium ? 'Manage team access' : 'Premium only'}</span>
-                        </div>
-                        {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
-                      </div>
                     </div>
                   </div>
-
-                  <div className="mini-stats-grid">
-                    <div className="mini-stat-card">
-                      <div className="mini-card-icon prods"><ShoppingBag size={20} /></div>
-                      <div className="mini-card-content">
-                        <span className="mini-card-label">Total Products</span>
-                        <span className="mini-card-value">{products.length}</span>
-                      </div>
+                  <div className="pro-card">
+                    <div className="pro-card-header">
+                      <h3 className="pro-card-title">Store Data</h3>
                     </div>
-                    <div className="mini-stat-card">
-                      <div className="mini-card-icon ings"><Package size={20} /></div>
-                      <div className="mini-card-content">
-                        <span className="mini-card-label">Ingredients</span>
-                        <span className="mini-card-value">{categories.length}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f1f5f9' }}>
+                         <span style={{ fontSize: 13, color: '#64748b' }}>Total Products</span>
+                         <span style={{ fontSize: 14, fontWeight: 700, color: '#3b82f6' }}>{products.length}</span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="dashboard-card transactions-card">
-                    <h3 className="dashboard-card-title">Recent Transactions</h3>
-                    <div className="dashboard-table-wrap">
-                      <table className="dashboard-table">
-                        <thead>
-                          <tr>
-                            <th>Time</th>
-                            <th>Payment</th>
-                            <th>Status</th>
-                            <th align="right">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[...stats.listHeaders]
-                            .reverse()
-                            .slice(0, 10)
-                            .map((h: SaleHeaderDoc) => (
-                              <tr key={h.$id}>
-                                <td>{new Date(tsOf(h)).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</td>
-                                <td>{pmOf(h).toUpperCase()}</td>
-                                <td>
-                                  <span className={`badge-${h.status || 'completed'}`}>
-                                    {(h.status || 'completed').toUpperCase()}
-                                  </span>
-                                </td>
-                                <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f1f5f9' }}>
+                         <span style={{ fontSize: 13, color: '#64748b' }}>Categories</span>
+                         <span style={{ fontSize: 14, fontWeight: 700, color: '#3b82f6' }}>{categories.length}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8 }}>
+                         <span style={{ fontSize: 13, color: '#64748b' }}>Today's Sales</span>
+                         <span style={{ fontSize: 14, fontWeight: 700, color: '#3b82f6' }}>{stats.todaySalesCount}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </>
+              </div>
+
+              <div className="pro-home-right">
+                <div className="pro-card">
+                  <div className="pro-card-header">
+                    <h3 className="pro-card-title">Recent TX</h3>
+                    <span style={{ fontSize: 12, color: '#3b82f6', cursor: 'pointer', fontWeight: 600 }} onClick={() => setManagementView('transactions')}>View all</span>
+                  </div>
+                  <div className="pro-message-list">
+                    {[...stats.listHeaders].reverse().slice(0, 5).map((h: SaleHeaderDoc) => (
+                      <div className="pro-msg-item" key={h.$id}>
+                        <div className="pro-msg-avatar">
+                           {pmOf(h) === 'cash' ? '💵' : '📱'}
+                        </div>
+                        <div className="pro-msg-info">
+                          <div className="pro-msg-name">{pmOf(h).toUpperCase()}</div>
+                          <div className="pro-msg-text">{new Date(tsOf(h)).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</div>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+                           Rp{totalOf(h).toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                    {stats.listHeaders.length === 0 && (
+                      <div style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>No recent transactions</div>
+                    )}
+                  </div>
+                  <button className="pro-msg-btn" onClick={() => setActiveTab('analytics')}>View all transactions & analytics</button>
+                </div>
+                
+                <div className="pro-card">
+                   <div className="pro-card-header">
+                     <h3 className="pro-card-title">All Listing</h3>
+                   </div>
+                   <div className="pro-listing-grid">
+                      {stats.bestSelling.slice(0, 4).map(p => {
+                         const match = products.find(x => x.$id === p.id);
+                         return (
+                          <div className="pro-listing-item" key={p.id}>
+                            {match?.imageUrl ? (
+                               <img src={match.imageUrl.startsWith('http') ? match.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_BUCKET_ID}/files/${match.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} alt={p.name} />
+                            ) : (
+                               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', padding: 8, textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#64748b' }}>{p.name}</div>
+                            )}
+                          </div>
+                         );
+                      })}
+                   </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="dashboard-premium-analytics">
