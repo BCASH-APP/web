@@ -8,11 +8,11 @@ import {
   Globe,
   Download,
   Shield,
-  GitBranch,
+  // GitBranch,
 } from 'lucide-react';
 import './pages.css';
 import appIconPng from '../assets/appIcon/icon.png';
-import splashIcon from '../assets/appIcon/splash-icon.png';
+import splashIcon from '../assets/appIcon/splash-icon-transparant.png';
 import adaptiveIcon from '../assets/appIcon/adaptive-icon.png';
 
 const FEATURES = [
@@ -44,7 +44,7 @@ const FEATURES = [
   {
     icon: <Globe size={20} />,
     title: 'Web Dashboard',
-    desc: 'Access your bakery data from any browser. Full analytics, reports, and team management.',
+    desc: 'Access your store data from any browser. Full analytics, reports, and team management.',
   },
 ];
 
@@ -92,16 +92,16 @@ export const LandingPage = () => {
         {/* Right panel – app name + features */}
         <div className="landing-right">
           <div className="landing-eyebrow-pill">
-            <ShoppingCart size={11} /> Bakery Management System
+            <ShoppingCart size={11} /> store Management System
           </div>
 
           <h1 className="landing-title">
             BCash POS System
-            <span className="landing-title-accent"> — Run your bakery smarter.</span>
+            <span className="landing-title-accent"> — Run your store smarter.</span>
           </h1>
 
           <p className="landing-subtitle">
-            An all‑in‑one mobile &amp; web platform by <strong>Basthdev</strong> for bakery owners.
+            An all‑in‑one mobile &amp; web platform by <strong>Basthdev</strong> for store owners.
             Manage sales, track ingredients, analyze performance, and empower your team — from a
             single app.
           </p>
@@ -129,9 +129,6 @@ export const LandingPage = () => {
           </div>
 
           <div className="landing-legal-links">
-            <Link to="/releases" className="landing-legal-link">
-              <GitBranch size={12} /> Release Notes
-            </Link>
             <Link to="/privacy" className="landing-legal-link">
               <Shield size={12} /> Privacy Policy
             </Link>
@@ -152,12 +149,11 @@ export const LandingPage = () => {
           <nav className="landing-footer-nav">
             <Link to="/" className="landing-footer-link">Home</Link>
             <Link to="/download" className="landing-footer-link">Download</Link>
-            <Link to="/releases" className="landing-footer-link">Releases</Link>
             <Link to="/privacy" className="landing-footer-link">Privacy</Link>
             <Link to="/policy" className="landing-footer-link">Terms</Link>
             <Link to="/dashboard" className="landing-footer-link">Dashboard</Link>
           </nav>
-          <p className="landing-footer-copy">© {new Date().getFullYear()} Basthdev. Built with ❤️ using Expo &amp; Appwrite.</p>
+          <p className="landing-footer-copy">© {new Date().getFullYear()} Basthdev. Built with ❤️ by Basth.</p>
         </div>
       </footer>
     </div>

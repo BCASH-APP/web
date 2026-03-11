@@ -47,7 +47,7 @@ export const DownloadPage = () => {
         </div>
         <h1 className="text-heading">Download BCash POS</h1>
         <p className="text-subtitle">
-          The all-in-one bakery management app by <strong>Basthdev</strong>. Free to download, sign
+          The all-in-one store management app by <strong>Basthdev</strong>. Free to download, sign
           in with your existing account.
         </p>
 

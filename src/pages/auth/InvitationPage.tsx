@@ -39,7 +39,7 @@ export const InvitationPage = () => {
       <section className="page-card" style={{ maxWidth: 540, marginInline: 'auto' }}>
         <div className="tag-pill tag-soft">Invitation</div>
         <h1 className="text-heading" style={{ marginTop: '0.8rem' }}>
-          Accepting your DashingBakery invite
+          Accepting your Store invite
         </h1>
         <p className="text-subtitle" style={{ marginTop: '0.55rem' }}>
           If the mobile app is installed, it will open automatically with this invitation. Otherwise
@@ -48,7 +48,7 @@ export const InvitationPage = () => {
 
         <ol className="invite-steps" style={{ marginTop: '0.9rem' }}>
           <li>You clicked an invite email or link that brought you here.</li>
-          <li>Clerk verifies your identity (sign in or sign up if needed).</li>
+          <li>We verify your identity (sign in or sign up if needed).</li>
           <li>We attempt to open the app using the custom URL scheme.</li>
           <li>If that fails, you&apos;re redirected to the download or help page.</li>
         </ol>

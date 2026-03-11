@@ -1,6 +1,6 @@
 import { Route, Routes, Navigate, Link, useLocation } from 'react-router-dom';
 import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/react';
-import { LayoutDashboard, Home, GitBranch, Download } from 'lucide-react';
+import { LayoutDashboard, Home, Download } from 'lucide-react';
 import appIcon from './assets/appIcon.svg';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
@@ -8,7 +8,7 @@ import { SignUpPage } from './pages/auth/SignUpPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { InvitationPage } from './pages/auth/InvitationPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { ReleasesPage } from './pages/ReleasesPage';
+// import { ReleasesPage } from './pages/ReleasesPage';
 import { DownloadPage } from './pages/DownloadPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { PolicyPage } from './pages/PolicyPage';
@@ -35,14 +35,12 @@ function App() {
             <span className="app-logo-text-main">BCash</span>
             <span className="app-logo-text-sub">POS</span>
           </Link>
-          {/* Developer badge */}
           <span className="app-dev-badge">by Basthdev</span>
         </div>
 
         <nav className="app-header-nav">
           <NavLink to="/" icon={<Home size={14} />} label="Home" />
           <NavLink to="/download" icon={<Download size={14} />} label="Download" />
-          <NavLink to="/releases" icon={<GitBranch size={14} />} label="Releases" />
           <Show when="signed-in">
             <NavLink to="/dashboard" icon={<LayoutDashboard size={14} />} label="Dashboard" />
           </Show>
@@ -71,7 +69,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/download" element={<DownloadPage />} />
-          <Route path="/releases" element={<ReleasesPage />} />
+
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/policy" element={<PolicyPage />} />
           <Route path="/auth/sign-in" element={<SignInPage />} />
@@ -88,7 +86,6 @@ function App() {
         <nav className="app-footer-nav">
           <Link to="/privacy">Privacy</Link>
           <Link to="/policy">Terms</Link>
-          <Link to="/releases">Releases</Link>
           <Link to="/download">Download</Link>
         </nav>
       </footer>
