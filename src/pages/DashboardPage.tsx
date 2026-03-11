@@ -44,6 +44,8 @@ import {
   salesCollectionId,
   ingredientsCollectionId,
   recipesCollectionId,
+  bucketId,
+  storage,
 } from '../lib/appwrite';
 import { create, list, remove, tenantQueries, update } from '../lib/repo';
 import { useUserData } from '../lib/useUserData';
@@ -83,6 +85,8 @@ type ProductDoc = {
   name?: string; 
   categoryId?: string;
   price?: number;
+  imageUrl?: string;
+  useHpp?: boolean;
   categoryName?: string;
 };
 type CategoryDoc = { $id: string; name?: string; color?: string };
@@ -549,7 +553,21 @@ export const DashboardPage = () => {
                                 <tr key={p.$id}>
                                   <td>
                                     <div className="manage-item-cell">
-                                      <span className="manage-item-name">{p.name || 'Unnamed Product'}</span>
+                                      {p.imageUrl ? (
+                                        <img 
+                                          src={p.imageUrl.startsWith('http') ? p.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${p.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
+                                          alt="" 
+                                          className="product-thumb-circle" 
+                                        />
+                                      ) : (
+                                        <div className="product-thumb-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                          <Package size={16} color="#cbd5e1" />
+                                        </div>
+                                      )}
+                                      <span className="manage-item-name">
+                                        {p.name || 'Unnamed Product'}
+                                        {p.useHpp && <span className="hpp-badge">HPP</span>}
+                                      </span>
                                     </div>
                                   </td>
                                   <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
@@ -1081,6 +1099,57 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                   />
                 </div>
               </div>
+
+              <div className="form-group">
+                <label>Product Image</label>
+                <div className="image-upload-zone" onClick={() => document.getElementById('prod-img-input')?.click()}>
+                  {formData.imageUrl ? (
+                    <img 
+                      src={formData.imageUrl.startsWith('http') ? formData.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${formData.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
+                      className="uploaded-preview" 
+                      alt="Preview" 
+                    />
+                  ) : (
+                    <div style={{ textAlign: 'center' }}>
+                      <Plus size={32} color="#94a3b8" />
+                      <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                        Click to Upload Image
+                      </div>
+                    </div>
+                  )}
+                  <input 
+                    id="prod-img-input"
+                    type="file" 
+                    hidden
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const resp = await storage.createFile(bucketId, 'unique()', file);
+                        setFormData({ ...formData, imageUrl: resp.$id });
+                      } catch (err) {
+                        alert('Upload failed');
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <div className="switch-group">
+                  <div className="switch-label-wrap">
+                    <label style={{ margin: 0 }}>Use HPP (Recipes)</label>
+                    <span className="switch-subtext">Link to recipe for stock & cost tracking</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.useHpp || false}
+                    onChange={(e) => setFormData({ ...formData, useHpp: e.target.checked })}
+                    style={{ width: 'auto' }}
+                  />
+                </div>
+              </div>
             </>
           )}
 
@@ -1155,9 +1224,18 @@ function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) 
             <div className="items-scroll-box" style={{ maxHeight: '200px', overflowY: 'auto' }}>
               {items.map((it: any) => (
                 <div key={it.$id} className="sale-item-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <div>
-                    <div className="font-bold">{productsById[it.productId]?.name || 'Unknown Item'}</div>
-                    <div className="text-sm text-muted">{it.quantity} x Rp{(it.priceEach || 0).toLocaleString()}</div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {productsById[it.productId]?.imageUrl && (
+                      <img 
+                        src={productsById[it.productId].imageUrl.startsWith('http') ? productsById[it.productId].imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${productsById[it.productId].imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
+                        className="sale-item-thumb" 
+                        alt="" 
+                      />
+                    )}
+                    <div>
+                      <div className="font-bold">{productsById[it.productId]?.name || 'Unknown Item'}</div>
+                      <div className="text-sm text-muted">{it.quantity} x Rp{(it.priceEach || 0).toLocaleString()}</div>
+                    </div>
                   </div>
                   <div className="font-bold">Rp{((it.quantity || 0) * (it.priceEach || 0)).toLocaleString()}</div>
                 </div>

@@ -2158,3 +2158,136 @@
   color: #cbd5e1;
 }
 
+/* Product & Transaction Enhancements */
+.product-thumb-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.hpp-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background-color: #3d7066;
+  color: white;
+  margin-left: 0.5rem;
+}
+
+.app-btn-danger {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+}
+
+.app-btn-danger:hover {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.app-btn-primary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #3d7066;
+  color: white;
+  border: none;
+}
+
+.app-btn-primary:hover {
+  background-color: #2d544c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 112, 102, 0.2);
+}
+
+.app-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.app-btn-secondary,
+.app-btn-neutral {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.app-btn-secondary:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.image-upload-zone {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 2px dashed #e2e8f0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.image-upload-zone:hover {
+  border-color: #3d7066;
+  background-color: #f0fdf4;
+}
+
+.uploaded-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.switch-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.switch-label-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.switch-subtext {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sale-item-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  margin-right: 1rem;
+  object-fit: cover;
+}
+

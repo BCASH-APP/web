@@ -1,8 +1,9 @@
-import { Client, Databases, Account, Functions } from 'appwrite';
+import { Client, Databases, Account, Functions, Storage } from 'appwrite';
 
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
 const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 export const databaseId = import.meta.env.VITE_APPWRITE_DB_ID;
+export const bucketId = import.meta.env.VITE_APPWRITE_BUCKET_ID || 'products';
 
 // Collection IDs (defaults match DashingBakery COLLECTIONS)
 export const salesCollectionId =
@@ -37,5 +38,6 @@ if (endpoint && projectId) {
 export const appwriteClient = client;
 export const databases = new Databases(client);
 export const account = new Account(client);
+export const storage = new Storage(client);
 export const appwriteFunctions = new Functions(client);
 
