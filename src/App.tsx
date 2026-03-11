@@ -1,5 +1,6 @@
-import { Route, Routes, Navigate, Link } from 'react-router-dom';
+import { Route, Routes, Navigate, Link, useLocation } from 'react-router-dom';
 import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/react';
+import { LayoutDashboard, Home, GitBranch, Download } from 'lucide-react';
 import appIcon from './assets/appIcon.svg';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
@@ -8,9 +9,21 @@ import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { InvitationPage } from './pages/auth/InvitationPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ReleasesPage } from './pages/ReleasesPage';
+import { DownloadPage } from './pages/DownloadPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { PolicyPage } from './pages/PolicyPage';
 import './App.css';
+
+function NavLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+  const location = useLocation();
+  const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
+  return (
+    <Link to={to} className={`app-nav-link${active ? ' app-nav-link-active' : ''}`}>
+      {icon}
+      <span>{label}</span>
+    </Link>
+  );
+}
 
 function App() {
   return (
@@ -18,24 +31,23 @@ function App() {
       <header className="app-header">
         <div className="app-header-left">
           <Link to="/" className="app-logo-pill">
-            <img src={appIcon} alt="BCash icon" className="app-logo-image" />
+            <img src={appIcon} alt="BCash POS icon" className="app-logo-image" />
             <span className="app-logo-text-main">BCash</span>
-            <span className="app-logo-text-sub">Web</span>
+            <span className="app-logo-text-sub">POS</span>
           </Link>
+          {/* Developer badge */}
+          <span className="app-dev-badge">by Basthdev</span>
         </div>
+
         <nav className="app-header-nav">
-          <Link to="/" className="app-nav-link">
-            Home
-          </Link>
-          <Link to="/releases" className="app-nav-link">
-            Releases
-          </Link>
+          <NavLink to="/" icon={<Home size={14} />} label="Home" />
+          <NavLink to="/download" icon={<Download size={14} />} label="Download" />
+          <NavLink to="/releases" icon={<GitBranch size={14} />} label="Releases" />
           <Show when="signed-in">
-            <Link to="/dashboard" className="app-nav-link">
-              Dashboard
-            </Link>
+            <NavLink to="/dashboard" icon={<LayoutDashboard size={14} />} label="Dashboard" />
           </Show>
         </nav>
+
         <div className="app-header-right">
           <Show when="signed-out">
             <SignInButton mode="modal">
@@ -58,6 +70,7 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/download" element={<DownloadPage />} />
           <Route path="/releases" element={<ReleasesPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/policy" element={<PolicyPage />} />
@@ -69,6 +82,16 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      <footer className="app-footer">
+        <span>© {new Date().getFullYear()} <strong>Basthdev</strong> · BCash POS System</span>
+        <nav className="app-footer-nav">
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/policy">Terms</Link>
+          <Link to="/releases">Releases</Link>
+          <Link to="/download">Download</Link>
+        </nav>
+      </footer>
     </div>
   );
 }
