@@ -19,15 +19,21 @@ import {
   Lock,
   TrendingUp,
   AlertCircle,
-  ShoppingBasket,
   Package,
   ShoppingBag,
-  Plus,
   Tags,
-  BookOpen,
+  Utensils,
   LayoutDashboard,
   BarChart2,
-  // ChevronRight,
+  History,
+  ChevronRight,
+  Search,
+  ArrowLeft,
+  Plus,
+  Users,
+  Edit2,
+  Trash2,
+  X,
 } from 'lucide-react';
 import './pages.css';
 import {
@@ -55,6 +61,7 @@ type SaleHeaderDoc = {
   status?: string;
   orgId?: string | null;
   clerkUserId?: string;
+  itemCount?: number; // Calculated or if available
 };
 
 type SaleItemDoc = {
@@ -69,7 +76,13 @@ type SaleItemDoc = {
   orgId?: string | null;
 };
 
-type ProductDoc = { $id: string; name?: string; categoryId?: string };
+type ProductDoc = { 
+  $id: string; 
+  name?: string; 
+  categoryId?: string;
+  price?: number;
+  categoryName?: string;
+};
 type CategoryDoc = { $id: string; name?: string; color?: string };
 type ExpenseDoc = { $id: string; amount?: number; timestamp?: string; $createdAt?: string };
 
@@ -104,6 +117,7 @@ export const DashboardPage = () => {
   const organizationList = userMemberships?.data ?? [];
   const [activeStoreId, setActiveStoreId] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'home' | 'analytics'>('home');
+  const [managementView, setManagementView] = useState<string | null>(null);
 
   const hasAnalyticsAccess = planId === 'premium';
 
@@ -398,127 +412,280 @@ export const DashboardPage = () => {
 
           {activeTab === 'home' ? (
             <div className="dashboard-mobile-parity">
-              <div className="mobile-parity-card">
-                <div className="mobile-card-pattern" />
-                <div className="mobile-card-header">
-                  <span className="mobile-card-subtitle">Today's Revenue</span>
-                  <span className="mobile-card-org">{storeName}</span>
-                </div>
-                <h2 className="mobile-card-revenue">Rp{stats.todayRevenue.toLocaleString()}</h2>
-                <div className="mobile-card-stats">
-                  <div className="mobile-stat">
-                    <span className="mobile-stat-label">Transactions</span>
-                    <span className="mobile-stat-val">{stats.todaySalesCount}</span>
+              {managementView ? (
+                <div className="management-view-container">
+                  <header className="management-view-header">
+                    <button className="back-btn" onClick={() => setManagementView(null)}>
+                      <ArrowLeft size={18} /> Back to Dashboard
+                    </button>
+                    <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
+                    <button className="app-btn-primary add-item-btn">
+                      <Plus size={16} /> Add {managementView.slice(0, -1)}
+                    </button>
+                  </header>
+                  
+                  <div className="management-list-card page-card">
+                    {managementView === 'products' ? (
+                      <div className="manage-list-items">
+                        <div className="manage-list-info">
+                          <span>Total: {products.length} items</span>
+                        </div>
+                        <div className="dashboard-table-wrap">
+                          <table className="dashboard-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th align="right">Price</th>
+                                <th align="right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {products.map(p => (
+                                <tr key={p.$id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      <span className="manage-item-name">{p.name || 'Unnamed Product'}</span>
+                                    </div>
+                                  </td>
+                                  <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
+                                  <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn edit-btn" title="Edit"><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" title="Delete"><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : managementView === 'categories' ? (
+                      <div className="manage-list-items">
+                        <div className="manage-list-info">
+                          <span>Total: {categories.length} categories</span>
+                        </div>
+                        <div className="dashboard-table-wrap">
+                          <table className="dashboard-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Items</th>
+                                <th align="right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {categories.map(c => (
+                                <tr key={c.$id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
+                                      <span className="manage-item-name">{c.name || 'Unnamed'}</span>
+                                    </div>
+                                  </td>
+                                  <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn edit-btn" title="Edit"><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" title="Delete"><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : managementView === 'transactions' ? (
+                      <div className="manage-list-items">
+                        <div className="manage-list-info">
+                          <span>Total: {stats.listHeaders.length} sales</span>
+                        </div>
+                        <div className="dashboard-table-wrap">
+                          <table className="dashboard-table">
+                            <thead>
+                              <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th align="right">Total</th>
+                                <th align="right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[...stats.listHeaders].reverse().map(h => (
+                                <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
+                                  <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                                  <td>{(h.status || 'completed').toUpperCase()}</td>
+                                  <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
+                                  <td>
+                                    <span className={`badge-${h.status || 'completed'}`}>
+                                      {(h.status || 'completed').toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn view-btn" title="Details"><ChevronRight size={14} /></button>
+                                      {h.status !== 'canceled' && (
+                                        <button className="icon-btn cancel-btn" title="Cancel Sale"><X size={14} /></button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="management-empty-state">
+                        <Search size={32} className="empty-icon" />
+                        <p>Managing {managementView} is currently being synchronized...</p>
+                        <button className="app-btn-secondary" onClick={() => setManagementView(null)}>Go Back</button>
+                      </div>
+                    )}
                   </div>
-                  <div className="mobile-stat-divider" />
-                  <div className="mobile-stat">
-                    <span className="mobile-stat-label">Total Revenue</span>
-                    <span className="mobile-stat-val">Rp{(stats.revenue / 1000).toFixed(0)}k</span>
-                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="mobile-parity-card">
+                    <div className="mobile-card-pattern" />
+                    <div className="mobile-card-header">
+                      <span className="mobile-card-subtitle">Today's Revenue</span>
+                      <span className="mobile-card-org">{storeName}</span>
+                    </div>
+                    <h2 className="mobile-card-revenue">Rp{stats.todayRevenue.toLocaleString()}</h2>
+                    <div className="mobile-card-stats">
+                      <div className="mobile-stat">
+                        <span className="mobile-stat-label">Transactions</span>
+                        <span className="mobile-stat-val">{stats.todaySalesCount}</span>
+                      </div>
+                      <div className="mobile-stat-divider" />
+                      <div className="mobile-stat">
+                        <span className="mobile-stat-label">Total Revenue</span>
+                        <span className="mobile-stat-val">Rp{(stats.revenue / 1000).toFixed(0)}k</span>
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="dashboard-content-grid">
-                <div className="dashboard-card action-section">
-                  <h3 className="dashboard-card-title">Quick Access</h3>
-                  <div className="web-action-grid">
-                    <div className="web-action-card primary" onClick={() => alert('Opening Cashier...')}>
-                      <div className="action-icon"><Plus size={20} /></div>
-                      <div className="action-info">
-                        <span className="action-label">New Sale</span>
-                        <span className="action-sub">Record a sale</span>
+                  <div className="dashboard-content-grid">
+                    <div className="dashboard-card action-section manage-store-card">
+                      <div className="card-header-with-action">
+                        <h3 className="dashboard-card-title">Manage Store</h3>
+                        <span className="manage-badge">MANAGEMENT SYSTEM</span>
                       </div>
-                    </div>
-                    <div className="web-action-card" onClick={() => alert('Opening Sales Report...')}>
-                      <div className="action-icon"><ShoppingBag size={20} /></div>
-                      <div className="action-info">
-                        <span className="action-label">Today Sold</span>
-                        <span className="action-sub">Check items sold</span>
-                      </div>
-                    </div>
-                    <div className="web-action-card" onClick={() => alert('Opening Products...')}>
-                      <div className="action-icon"><ShoppingBasket size={20} /></div>
-                      <div className="action-info">
-                        <span className="action-label">Products</span>
-                        <span className="action-sub">Manage items</span>
-                      </div>
-                    </div>
-                    <div className="web-action-card" onClick={() => alert('Opening Categories...')}>
-                      <div className="action-icon"><Tags size={20} /></div>
-                      <div className="action-info">
-                        <span className="action-label">Categories</span>
-                        <span className="action-sub">Item categories</span>
-                      </div>
-                    </div>
-                    <div className={`web-action-card ${planId === 'free_trial' ? 'disabled' : ''}`}>
-                      <div className="action-icon"><Package size={20} /></div>
-                      <div className="action-info">
-                        <span className="action-label">Stock</span>
-                        <span className="action-sub">Inventory</span>
-                      </div>
-                      {planId === 'free_trial' && <Lock size={12} className="lock-tag" />}
-                    </div>
-                    <div className={`web-action-card ${planId === 'free_trial' ? 'disabled' : ''}`}>
-                      <div className="action-icon"><BookOpen size={20} /></div>
-                      <div className="action-info">
-                        <span className="action-label">Recipes</span>
-                        <span className="action-sub">Manage menu</span>
-                      </div>
-                      {planId === 'free_trial' && <Lock size={12} className="lock-tag" />}
-                    </div>
-                  </div>
-                </div>
+                      <div className="manage-grid">
+                        <div className="manage-item" onClick={() => setManagementView('products')}>
+                          <div className="manage-icon prods"><ShoppingBag size={22} /></div>
+                          <div className="manage-text">
+                            <span className="manage-label">Products</span>
+                            <span className="manage-desc">Add, Edit & Remove items</span>
+                          </div>
+                          <ChevronRight size={16} className="manage-arrow" />
+                        </div>
+                        
+                        <div className="manage-item" onClick={() => setManagementView('categories')}>
+                          <div className="manage-icon cats"><Tags size={22} /></div>
+                          <div className="manage-text">
+                            <span className="manage-label">Categories</span>
+                            <span className="manage-desc">Organize your menu</span>
+                          </div>
+                          <ChevronRight size={16} className="manage-arrow" />
+                        </div>
 
-                <div className="mini-stats-grid">
-                  <div className="mini-stat-box">
-                    <div className="mini-icon-bg"><ShoppingBasket size={18} /></div>
-                    <div>
-                      <span className="mini-box-val">{products.length}</span>
-                      <span className="mini-box-label">Active Products</span>
-                    </div>
-                  </div>
-                  <div className="mini-stat-box">
-                    <div className="mini-icon-bg"><Package size={18} /></div>
-                    <div>
-                      <span className="mini-box-val">{categories.length}</span>
-                      <span className="mini-box-label">Raw Materials</span>
-                    </div>
-                  </div>
-                </div>
+                        <div className="manage-item" onClick={() => setManagementView('ingredients')}>
+                          <div className="manage-icon ings"><Package size={22} /></div>
+                          <div className="manage-text">
+                            <span className="manage-label">Ingredients</span>
+                            <span className="manage-desc">Track raw materials</span>
+                          </div>
+                          <ChevronRight size={16} className="manage-arrow" />
+                        </div>
 
-                <div className="dashboard-card transactions-card">
-                  <h3 className="dashboard-card-title">Recent Transactions</h3>
-                  <div className="dashboard-table-wrap">
-                    <table className="dashboard-table">
-                      <thead>
-                        <tr>
-                          <th>Time</th>
-                          <th>Payment</th>
-                          <th>Status</th>
-                          <th align="right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...stats.listHeaders]
-                          .reverse()
-                          .slice(0, 10)
-                          .map((h: SaleHeaderDoc) => (
-                            <tr key={h.$id}>
-                              <td>{new Date(tsOf(h)).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</td>
-                              <td>{pmOf(h).toUpperCase()}</td>
-                              <td>
-                                <span className={`badge-${h.status || 'completed'}`}>
-                                  {(h.status || 'completed').toUpperCase()}
-                                </span>
-                              </td>
-                              <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                        <div className="manage-item" onClick={() => setManagementView('recipes')}>
+                          <div className="manage-icon recs"><Utensils size={22} /></div>
+                          <div className="manage-text">
+                            <span className="manage-label">Recipes</span>
+                            <span className="manage-desc">HPP & Stock auto-deduct</span>
+                          </div>
+                          <ChevronRight size={16} className="manage-arrow" />
+                        </div>
+
+                        <div className="manage-item" onClick={() => setManagementView('transactions')}>
+                          <div className="manage-icon trans"><History size={22} /></div>
+                          <div className="manage-text">
+                            <span className="manage-label">Transactions</span>
+                            <span className="manage-desc">Cancel & Detail sales</span>
+                          </div>
+                          <ChevronRight size={16} className="manage-arrow" />
+                        </div>
+
+                        <div className="manage-item disabled">
+                          <div className="manage-icon staff"><Users size={22} /></div>
+                          <div className="manage-text">
+                            <span className="manage-label">Staff Management</span>
+                            <span className="manage-desc">Coming soon</span>
+                          </div>
+                          <Lock size={14} className="manage-lock" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mini-stats-grid">
+                      <div className="mini-stat-card">
+                        <div className="mini-card-icon prods"><ShoppingBag size={20} /></div>
+                        <div className="mini-card-content">
+                          <span className="mini-card-label">Total Products</span>
+                          <span className="mini-card-value">{products.length}</span>
+                        </div>
+                      </div>
+                      <div className="mini-stat-card">
+                        <div className="mini-card-icon ings"><Package size={20} /></div>
+                        <div className="mini-card-content">
+                          <span className="mini-card-label">Ingredients</span>
+                          <span className="mini-card-value">{categories.length}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dashboard-card transactions-card">
+                      <h3 className="dashboard-card-title">Recent Transactions</h3>
+                      <div className="dashboard-table-wrap">
+                        <table className="dashboard-table">
+                          <thead>
+                            <tr>
+                              <th>Time</th>
+                              <th>Payment</th>
+                              <th>Status</th>
+                              <th align="right">Amount</th>
                             </tr>
-                          ))}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody>
+                            {[...stats.listHeaders]
+                              .reverse()
+                              .slice(0, 10)
+                              .map((h: SaleHeaderDoc) => (
+                                <tr key={h.$id}>
+                                  <td>{new Date(tsOf(h)).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</td>
+                                  <td>{pmOf(h).toUpperCase()}</td>
+                                  <td>
+                                    <span className={`badge-${h.status || 'completed'}`}>
+                                      {(h.status || 'completed').toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="dashboard-premium-analytics">
@@ -586,52 +753,52 @@ export const DashboardPage = () => {
               </div>
 
               <div className="dashboard-charts-main">
-            <div className="dashboard-card chart-hero">
-              <h3 className="dashboard-card-title">Revenue Trend</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={stats.chartData}>
-                  <XAxis dataKey="label" stroke={MUTED} fontSize={11} />
-                  <YAxis stroke={MUTED} fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
-                  <Area type="monotone" dataKey="value" stroke={PRIMARY} fill={PRIMARY} fillOpacity={0.1} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+                <div className="dashboard-card chart-hero">
+                  <h3 className="dashboard-card-title">Revenue Trend</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={stats.chartData}>
+                      <XAxis dataKey="label" stroke={MUTED} fontSize={11} />
+                      <YAxis stroke={MUTED} fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
+                      <Area type="monotone" dataKey="value" stroke={PRIMARY} fill={PRIMARY} fillOpacity={0.1} strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-          <div className="dashboard-charts-row">
-            <div className="dashboard-card">
-              <h3 className="dashboard-card-title">Peak Hours</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={stats.topHours}>
-                  <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
-                  <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} />
-                  <Bar dataKey="value" fill={PRIMARY} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+              <div className="dashboard-charts-row">
+                <div className="dashboard-card">
+                  <h3 className="dashboard-card-title">Peak Hours</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={stats.topHours}>
+                      <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
+                      <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} />
+                      <Bar dataKey="value" fill={PRIMARY} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
 
-            <div className="dashboard-card">
-              <h3 className="dashboard-card-title">Payment Methods</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={stats.paymentData}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {stats.paymentData.map((_, index) => (
-                      <Cell key={index} fill={[PRIMARY, SUCCESS, WARNING, DANGER, MUTED][index % 5]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+                <div className="dashboard-card">
+                  <h3 className="dashboard-card-title">Payment Methods</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={stats.paymentData}
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {stats.paymentData.map((_, index) => (
+                          <Cell key={index} fill={[PRIMARY, SUCCESS, WARNING, DANGER, MUTED][index % 5]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
               <div className="dashboard-two-col">
                 <div className="dashboard-card">

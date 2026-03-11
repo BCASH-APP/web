@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate, Link, useLocation } from 'react-router-dom';
-import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/react';
-import { LayoutDashboard, Home, Download } from 'lucide-react';
+import { UserButton, SignInButton, SignUpButton, useUser } from '@clerk/react';
+import { LayoutDashboard, Home, Download, Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import appIcon from './assets/appIcon/icon.png';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
@@ -14,11 +15,11 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { PolicyPage } from './pages/PolicyPage';
 import './App.css';
 
-function NavLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+function NavLink({ to, icon, label, onClick }: { to: string; icon: React.ReactNode; label: string; onClick?: () => void }) {
   const location = useLocation();
   const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
   return (
-    <Link to={to} className={`app-nav-link${active ? ' app-nav-link-active' : ''}`}>
+    <Link to={to} className={`app-nav-link${active ? ' app-nav-link-active' : ''}`} onClick={onClick}>
       {icon}
       <span>{label}</span>
     </Link>
@@ -26,8 +27,17 @@ function NavLink({ to, icon, label }: { to: string; icon: React.ReactNode; label
 }
 
 function App() {
+  const { isSignedIn } = useUser();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div className="app-root">
+    <div className={`app-root ${mobileMenuOpen ? 'menu-open' : ''}`}>
       <header className="app-header">
         <div className="app-header-left">
           <Link to="/" className="app-logo-pill">
@@ -39,31 +49,71 @@ function App() {
         </div>
 
         <nav className="app-header-nav">
-          <NavLink to="/" icon={<Home size={14} />} label="Home" />
+          {!isSignedIn && (
+            <NavLink to="/" icon={<Home size={14} />} label="Home" />
+          )}
           <NavLink to="/download" icon={<Download size={14} />} label="Download" />
-          <Show when="signed-in">
+          {isSignedIn && (
             <NavLink to="/dashboard" icon={<LayoutDashboard size={14} />} label="Dashboard" />
-          </Show>
+          )}
         </nav>
 
         <div className="app-header-right">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button className="app-btn-secondary" type="button">
-                Sign in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button className="app-btn-primary" type="button">
-                Sign up
-              </button>
-            </SignUpButton>
-          </Show>
-          <Show when="signed-in">
+          {!isSignedIn && (
+            <div className="auth-btns-desktop">
+              <SignInButton mode="modal">
+                <button className="app-btn-secondary" type="button">
+                  Sign in
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="app-btn-primary" type="button">
+                  Sign up
+                </button>
+              </SignUpButton>
+            </div>
+          )}
+          {isSignedIn && (
             <UserButton />
-          </Show>
+          )}
+
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </header>
+
+      {/* Mobile Drawer */}
+      <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
+        <nav className="mobile-nav">
+          {!isSignedIn && (
+            <NavLink to="/" icon={<Home size={18} />} label="Home" />
+          )}
+          <NavLink to="/download" icon={<Download size={18} />} label="Download" />
+          {isSignedIn && (
+            <NavLink to="/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
+          )}
+
+          {!isSignedIn && (
+            <div className="mobile-auth-section">
+              <SignInButton mode="modal">
+                <button className="app-btn-secondary mobile-btn" type="button">
+                  Sign in
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="app-btn-primary mobile-btn" type="button">
+                  Sign up
+                </button>
+              </SignUpButton>
+            </div>
+          )}
+        </nav>
+      </div>
 
       <main className="app-main">
         <Routes>
