@@ -7,8 +7,8 @@
   --pro-text-main: #0f172a;
   --pro-text-muted: #64748b;
   --pro-border: #e2e8f0;
-  --pro-primary: #3b82f6;
-  --pro-primary-hover: #2563eb;
+  --pro-primary: #3d7066;
+  --pro-primary-hover: #2a4d46;
   --pro-success: #10b981;
   --pro-warning: #f59e0b;
   --pro-danger: #ef4444;
@@ -195,7 +195,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #3d7066, #2a4d46);
   color: white;
   display: flex;
   align-items: center;
@@ -243,7 +243,7 @@
 
 /* Hero Card */
 .pro-hero-card {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, #2a4d46, #3d7066);
   border-radius: 24px;
   padding: 40px;
   color: #ffffff;
@@ -252,7 +252,7 @@
   align-items: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(61, 112, 102, 0.4);
 }
 
 .pro-hero-content {
@@ -277,7 +277,7 @@
 
 .pro-hero-btn {
   background: #ffffff;
-  color: #2563eb;
+  color: #3d7066;
   border: none;
   padding: 12px 24px;
   border-radius: 12px;
@@ -482,11 +482,11 @@
   background: #dbeafe;
 }
 
-/* Listing Grid (Best Selling) */
+/* Listing Grid (Image 3x3) */
 .pro-listing-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .pro-listing-item {
@@ -515,6 +515,28 @@
   height: 100%;
   background: #ffffff;
   border-radius: 24px;
+}
+
+/* Modal Two Col Structure */
+.pro-modal-two-col {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 32px;
+}
+
+.pro-modal-footer-wide {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pro-border);
+}
+
+.pro-modal-card-wide {
+  width: 900px !important;
+  max-width: 95vw !important;
 }
 
 /* Responsive */

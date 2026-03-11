@@ -121,7 +121,7 @@ function App() {
         </div>
       )}
 
-      <main className={`app-main ${isDashboard ? 'dashboard-mode' : ''}`}>
+      <main className={`${isDashboard ? 'dashboard-mode' : ''}`}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/download" element={<DownloadPage />} />
