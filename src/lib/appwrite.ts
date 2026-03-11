@@ -23,6 +23,8 @@ export const recipesCollectionId =
 export const recipeLinesCollectionId =
   import.meta.env.VITE_APPWRITE_RECIPE_LINES_COLLECTION_ID || 'recipe_lines';
 export const paymentsCollectionId = import.meta.env.VITE_APPWRITE_PAYMENTS_COLLECTION_ID;
+export const stockAdjustmentsCollectionId =
+  import.meta.env.VITE_APPWRITE_STOCK_ADJUSTMENTS_COLLECTION_ID || 'stock_adjustments';
 
 const client = new Client();
 

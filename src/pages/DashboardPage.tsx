@@ -16,7 +16,6 @@ import {
   YAxis,
 } from 'recharts';
 import {
-  Lock,
   TrendingUp,
   AlertCircle,
   Package,
@@ -38,6 +37,10 @@ import {
   QrCode,
   ArrowLeftRight,
   Activity,
+  ArrowUp,
+  ArrowDown,
+  Receipt,
+  ClipboardList,
 } from 'lucide-react';
 import logoIcon from '../assets/appIcon/splash-icon-transparant.png';
 import './pages.css';
@@ -50,6 +53,7 @@ import {
   salesCollectionId,
   ingredientsCollectionId,
   recipesCollectionId,
+  stockAdjustmentsCollectionId,
   bucketId,
   storage,
   appwriteClient,
@@ -97,9 +101,10 @@ type ProductDoc = {
   usesRecipe?: boolean;
   recipeId?: string;
   categoryName?: string;
+  categoryColor?: string;
 };
 type CategoryDoc = { $id: string; name?: string; color?: string };
-type ExpenseDoc = { $id: string; amount?: number; timestamp?: string; $createdAt?: string };
+type ExpenseDoc = { $id: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string };
 type IngredientDoc = {
   $id: string;
   name?: string;
@@ -114,6 +119,14 @@ type RecipeDoc = {
   name?: string;
   yield?: number;
   overheadPercent?: number;
+};
+type StockAdjustmentDoc = {
+  $id: string;
+  ingredientId: string;
+  deltaBase: number;
+  reason?: string;
+  timestamp: string;
+  $createdAt: string;
 };
 
 function tsOf(doc: { timestamp?: string; $createdAt: string }) {
@@ -149,188 +162,249 @@ type ModalProps = {
   initialData?: any;
   categories: CategoryDoc[];
   recipes: RecipeDoc[];
+  allProducts: ProductDoc[];
   loading: boolean;
 };
 
-const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, loading }) => {
+const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, allProducts, loading }) => {
   const [formData, setFormData] = useState<any>(initialData || {});
+  const [showGallery, setShowGallery] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     void onSave(formData);
   };
 
+  const galleryImages = Array.from(new Set(allProducts.map(p => p.imageUrl).filter(Boolean)));
+
   return (
     <div className="modal-overlay">
       <div className={`modal-card ${type === 'products' ? 'pro-modal-card-wide' : ''}`}>
         <header className="modal-header">
-          <h3>{initialData ? 'Edit' : 'Add New'} {type.slice(0, -1)}</h3>
+          <h3>{initialData ? 'Edit' : 'Add New'} {type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1, -1)}</h3>
           <button className="close-btn" onClick={onClose}><X size={20} /></button>
         </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          {type === 'products' && (
-            <div className="pro-modal-two-col">
-              <div>
+
+        {showGallery ? (
+          <div className="gallery-view">
+            <div className="gallery-header">
+              <h4>Cloud Gallery</h4>
+              <button className="pro-btn-subtle" onClick={() => setShowGallery(false)}>Back to Form</button>
+            </div>
+            <div className="gallery-grid">
+              {galleryImages.map((img: any, idx) => (
+                <div key={idx} className="gallery-item" onClick={() => { setFormData({ ...formData, imageUrl: img }); setShowGallery(false); }}>
+                  <img src={img.startsWith('http') ? img : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${img}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} alt="" />
+                </div>
+              ))}
+              {galleryImages.length === 0 && <p className="text-center text-muted">No images in gallery yet</p>}
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="modal-form">
+            {type === 'products' && (
+              <div className="pro-modal-two-col">
+                <div>
+                  <div className="form-group">
+                    <label>Product Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. Special Croissant"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select
+                      required
+                      value={formData.categoryId || ''}
+                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((c) => (
+                        <option key={c.$id} value={c.$id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    {!formData.usesRecipe && (
+                      <div className="form-group">
+                        <label>HPP / Cost (Rp)</label>
+                        <input
+                          type="number"
+                          required={!formData.usesRecipe}
+                          value={formData.cost || ''}
+                          onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
+                          placeholder="8000"
+                        />
+                      </div>
+                    )}
+                    <div className="form-group">
+                      <label>Price (Rp)</label>
+                      <input
+                        type="number"
+                        required
+                        value={formData.price || ''}
+                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                        placeholder="15000"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      Product Image
+                      <span className="gallery-trigger" onClick={() => setShowGallery(true)}>Open Gallery</span>
+                    </label>
+                    <div className="image-upload-zone" onClick={() => document.getElementById('prod-img-input')?.click()}>
+                      {formData.imageUrl ? (
+                        <img
+                          src={formData.imageUrl.startsWith('http') ? formData.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${formData.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`}
+                          className="uploaded-preview"
+                          alt="Preview"
+                        />
+                      ) : (
+                        <div style={{ textAlign: 'center' }}>
+                          <Plus size={32} color="#94a3b8" />
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                            Click to Upload Image
+                          </div>
+                        </div>
+                      )}
+                      <input
+                        id="prod-img-input"
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const resp = await storage.createFile(bucketId, 'unique()', file);
+                            setFormData({ ...formData, imageUrl: resp.$id, imageFileId: resp.$id });
+                          } catch (err) {
+                            alert('Upload failed');
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <div className="switch-group">
+                      <div className="switch-label-wrap">
+                        <label style={{ margin: 0 }}>Use HPP (Recipes)</label>
+                        <span className="switch-subtext">Link to recipe for stock & cost tracking</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={formData.usesRecipe || false}
+                        onChange={(e) => setFormData({ ...formData, usesRecipe: e.target.checked })}
+                        style={{ width: 'auto' }}
+                      />
+                    </div>
+                  </div>
+
+                  {formData.usesRecipe && (
+                    <div className="form-group" style={{ marginTop: '1rem' }}>
+                      <label>Link to Recipe</label>
+                      <select
+                        required={formData.usesRecipe}
+                        value={formData.recipeId || ''}
+                        onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
+                      >
+                        <option value="">Select Recipe</option>
+                        {recipes.map((r) => (
+                          <option key={r.$id} value={r.$id}>{r.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {type === 'categories' && (
+              <>
                 <div className="form-group">
-                  <label>Product Name</label>
+                  <label>Category Name</label>
                   <input
                     type="text"
                     required
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Special Croissant"
+                    placeholder="e.g. Pastry"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Category</label>
-                  <select
-                    required
-                    value={formData.categoryId || ''}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((c) => (
-                      <option key={c.$id} value={c.$id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-row">
-                  {!formData.usesRecipe && (
-                    <div className="form-group">
-                      <label>HPP / Cost (Rp)</label>
-                      <input
-                        type="number"
-                        required={!formData.usesRecipe}
-                        value={formData.cost || ''}
-                        onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
-                        placeholder="8000"
-                      />
-                    </div>
-                  )}
-                  <div className="form-group">
-                    <label>Price (Rp)</label>
+                  <label>Brand Color</label>
+                  <div className="color-input-wrap">
                     <input
-                      type="number"
-                      required
-                      value={formData.price || ''}
-                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                      placeholder="15000"
+                      type="color"
+                      value={formData.color || '#3d7066'}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                     />
+                    <code>{formData.color || '#3d7066'}</code>
                   </div>
                 </div>
-              </div>
-              <div>
+              </>
+            )}
+
+            {type === 'expenses' && (
+              <>
                 <div className="form-group">
-                  <label>Product Image</label>
-                  <div className="image-upload-zone" onClick={() => document.getElementById('prod-img-input')?.click()}>
-                    {formData.imageUrl ? (
-                      <img
-                        src={formData.imageUrl.startsWith('http') ? formData.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${formData.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`}
-                        className="uploaded-preview"
-                        alt="Preview"
-                      />
-                    ) : (
-                      <div style={{ textAlign: 'center' }}>
-                        <Plus size={32} color="#94a3b8" />
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-                          Click to Upload Image
-                        </div>
-                      </div>
-                    )}
-                    <input
-                      id="prod-img-input"
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const resp = await storage.createFile(bucketId, 'unique()', file);
-                          setFormData({ ...formData, imageUrl: resp.$id, imageFileId: resp.$id });
-                        } catch (err) {
-                          alert('Upload failed');
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <div className="switch-group">
-                    <div className="switch-label-wrap">
-                      <label style={{ margin: 0 }}>Use HPP (Recipes)</label>
-                      <span className="switch-subtext">Link to recipe for stock & cost tracking</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.usesRecipe || false}
-                      onChange={(e) => setFormData({ ...formData, usesRecipe: e.target.checked })}
-                      style={{ width: 'auto' }}
-                    />
-                  </div>
-                </div>
-
-                {formData.usesRecipe && (
-                  <div className="form-group" style={{ marginTop: '1rem' }}>
-                    <label>Link to Recipe</label>
-                    <select
-                      required={formData.usesRecipe}
-                      value={formData.recipeId || ''}
-                      onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
-                    >
-                      <option value="">Select Recipe</option>
-                      {recipes.map((r) => (
-                        <option key={r.$id} value={r.$id}>{r.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {type === 'categories' && (
-            <>
-              <div className="form-group">
-                <label>Category Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Pastry"
-                />
-              </div>
-              <div className="form-group">
-                <label>Brand Color</label>
-                <div className="color-input-wrap">
+                  <label>Description</label>
                   <input
-                    type="color"
-                    value={formData.color || '#3d7066'}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    type="text"
+                    required
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="e.g. Electricity bill"
                   />
-                  <code>{formData.color || '#3d7066'}</code>
                 </div>
+                <div className="form-group">
+                  <label>Amount (Rp)</label>
+                  <input
+                    type="number"
+                    required
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                    placeholder="50000"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.timestamp ? new Date(formData.timestamp).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setFormData({ ...formData, timestamp: new Date(e.target.value).toISOString() })}
+                  />
+                </div>
+              </>
+            )}
+
+            {(type === 'ingredients' || type === 'recipes' || type === 'stock_changes') && (
+              <div className="modal-premium-notice">
+                <Smartphone size={48} />
+                <h4>Display Only on Web</h4>
+                <p>Detailed management for {type.replace('_', ' ')} is best handled via the mobile app for real-time inventory precision.</p>
               </div>
-            </>
-          )}
+            )}
 
-          {(type === 'ingredients' || type === 'recipes') && (
-            <div className="modal-premium-notice">
-              <Lock size={32} />
-              <h4>Coming Soon to Web</h4>
-              <p>Advanced Ingredients & Recipe management is currently best handled via the mobile app. We are syncronizing these detailed forms for web.</p>
-            </div>
-          )}
-
-          <footer className={type === 'products' ? 'pro-modal-footer-wide' : 'modal-footer'}>
-            <button type="button" className="app-btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
-            <button type="submit" className="app-btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </footer>
-        </form>
+            <footer className={(type === 'products' || type === 'expenses') ? 'pro-modal-footer-wide' : 'modal-footer'}>
+              <button type="button" className="app-btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
+              {(type === 'products' || type === 'categories' || type === 'expenses') && (
+                <button type="submit" className="app-btn-primary" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </button>
+              )}
+            </footer>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -435,6 +509,7 @@ export const DashboardPage = () => {
   const [activeStoreId, setActiveStoreId] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'home' | 'analytics'>('home');
   const [managementView, setManagementView] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const hasAnalyticsAccess = planId === 'premium';
 
@@ -454,6 +529,7 @@ export const DashboardPage = () => {
   const [expenses, setExpenses] = useState<ExpenseDoc[]>([]);
   const [ingredients, setIngredients] = useState<IngredientDoc[]>([]);
   const [recipes, setRecipes] = useState<RecipeDoc[]>([]);
+  const [stockAdjustments, setStockAdjustments] = useState<StockAdjustmentDoc[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -479,6 +555,7 @@ export const DashboardPage = () => {
     else if (managementView === 'categories') colId = categoriesCollectionId;
     else if (managementView === 'ingredients') colId = ingredientsCollectionId;
     else if (managementView === 'recipes') colId = recipesCollectionId;
+    else if (managementView === 'expenses') colId = expensesCollectionId;
 
     if (!colId) return;
     try {
@@ -501,6 +578,7 @@ export const DashboardPage = () => {
     else if (managementView === 'categories') colId = categoriesCollectionId;
     else if (managementView === 'ingredients') colId = ingredientsCollectionId;
     else if (managementView === 'recipes') colId = recipesCollectionId;
+    else if (managementView === 'expenses') colId = expensesCollectionId;
 
     if (!colId) return;
     try {
@@ -511,12 +589,14 @@ export const DashboardPage = () => {
         else if (managementView === 'categories') setCategories(categories.map(c => c.$id === updated.$id ? updated : c));
         else if (managementView === 'ingredients') setIngredients(ingredients.map(i => i.$id === updated.$id ? updated : i));
         else if (managementView === 'recipes') setRecipes(recipes.map(r => r.$id === updated.$id ? updated : r));
+        else if (managementView === 'expenses') setExpenses(expenses.map(e => e.$id === updated.$id ? updated : e));
       } else {
         const created = await create<any>(colId, payload);
         if (managementView === 'products') setProducts([...products, created]);
         else if (managementView === 'categories') setCategories([...categories, created]);
         else if (managementView === 'ingredients') setIngredients([...ingredients, created]);
         else if (managementView === 'recipes') setRecipes([...recipes, created]);
+        else if (managementView === 'expenses') setExpenses([...expenses, created]);
       }
       setShowModal(null);
     } catch (e) {
@@ -557,7 +637,7 @@ export const DashboardPage = () => {
       const tenant = tenantQueries(clerkUserId, activeStoreId);
 
       try {
-        const [headers, items, prods, cats, exps, ings, recs] = await Promise.all([
+        const [headers, items, prods, cats, exps, ings, recs, stocks] = await Promise.all([
           list<SaleHeaderDoc>(salesCollectionId, [
             Query.greaterThanEqual('timestamp', new Date(startTs).toISOString()),
             Query.lessThanEqual('timestamp', new Date(endTs).toISOString()),
@@ -569,6 +649,7 @@ export const DashboardPage = () => {
           list<ExpenseDoc>(expensesCollectionId, [...tenant]),
           isPremium ? list<IngredientDoc>(ingredientsCollectionId, [...tenant]) : Promise.resolve([]),
           isPremium ? list<RecipeDoc>(recipesCollectionId, [...tenant]) : Promise.resolve([]),
+          isPremium ? list<StockAdjustmentDoc>(stockAdjustmentsCollectionId, [...tenant]) : Promise.resolve([]),
         ]);
         setSaleHeaders(headers);
         setSaleItems(items);
@@ -577,6 +658,7 @@ export const DashboardPage = () => {
         setExpenses(exps);
         setIngredients(ings);
         setRecipes(recs);
+        setStockAdjustments(stocks);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load data');
       } finally {
@@ -832,19 +914,27 @@ export const DashboardPage = () => {
             <button className={`pro-nav-item ${managementView === 'categories' ? 'active' : ''}`} onClick={() => setManagementView('categories')}>
               <Tags size={20} /> Categories
             </button>
-            <button className={`pro-nav-item ${managementView === 'ingredients' ? 'active' : ''}`} onClick={() => setManagementView('ingredients')}>
-              <Package size={20} /> Ingredients
-            </button>
-            <button className={`pro-nav-item ${managementView === 'recipes' ? 'active' : ''}`} onClick={() => setManagementView('recipes')}>
-              <Utensils size={20} /> Recipes
-            </button>
             <button className={`pro-nav-item ${managementView === 'transactions' ? 'active' : ''}`} onClick={() => setManagementView('transactions')}>
               <History size={20} /> Transactions
             </button>
             {isPremium && (
-              <button className={`pro-nav-item ${managementView === 'staff' ? 'active' : ''}`} onClick={() => setManagementView('staff')}>
-                <Users size={20} /> Staff
-              </button>
+              <>
+                <button className={`pro-nav-item ${managementView === 'ingredients' ? 'active' : ''}`} onClick={() => setManagementView('ingredients')}>
+                  <Package size={20} /> Ingredients
+                </button>
+                <button className={`pro-nav-item ${managementView === 'recipes' ? 'active' : ''}`} onClick={() => setManagementView('recipes')}>
+                  <Utensils size={20} /> Recipes
+                </button>
+                <button className={`pro-nav-item ${managementView === 'expenses' ? 'active' : ''}`} onClick={() => setManagementView('expenses')}>
+                  <Receipt size={20} /> Expenses
+                </button>
+                <button className={`pro-nav-item ${managementView === 'stock_changes' ? 'active' : ''}`} onClick={() => setManagementView('stock_changes')}>
+                  <ClipboardList size={20} /> Stock Changes
+                </button>
+                <button className={`pro-nav-item ${managementView === 'staff' ? 'active' : ''}`} onClick={() => setManagementView('staff')}>
+                  <Users size={20} /> Staff
+                </button>
+              </>
             )}
           </div>
         </nav>
@@ -863,7 +953,12 @@ export const DashboardPage = () => {
             </h1>
             <div className="pro-search-bar hide-mobile">
               <Search size={18} color="#94a3b8" />
-              <input type="text" placeholder="Search here..." />
+              <input 
+                type="text" 
+                placeholder="Search name, ID, or more..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
 
@@ -930,7 +1025,9 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {products.map(p => (
+                            {products
+                              .filter(p => !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.$id.includes(searchQuery))
+                              .map(p => (
                               <tr key={p.$id}>
                                 <td>
                                   <div className="manage-item-cell">
@@ -947,17 +1044,16 @@ export const DashboardPage = () => {
                                     )}
                                     <span className="manage-item-name">
                                       {p.name || 'Unnamed Product'}
-                                      {p.usesRecipe && <span className="hpp-badge">HPP</span>}
+                                      <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
+                                        {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
+                                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>HPP: Rp{(p.cost || 0).toLocaleString()}</span>
+                                      </div>
                                     </span>
                                   </div>
                                 </td>
                                 <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
                                 <td align="right" className="hpp-val-cell">
-                                  {p.usesRecipe ? (
-                                    <span className="hpp-hint" title="Configured via Recipe">Recipe Based</span>
-                                  ) : (
-                                    <span>Rp{(p.cost || 0).toLocaleString()}</span>
-                                  )}
+                                  <span>Rp{(p.cost || 0).toLocaleString()}</span>
                                 </td>
                                 <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                 <td align="right">
@@ -995,7 +1091,9 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {categories.map(c => (
+                            {categories
+                              .filter(c => !searchQuery || c.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                              .map(c => (
                               <tr key={c.$id}>
                                 <td>
                                   <div className="manage-item-cell">
@@ -1036,7 +1134,10 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {[...stats.listHeaders].reverse().map(h => (
+                            {[...stats.listHeaders]
+                              .reverse()
+                              .filter(h => !searchQuery || h.$id.includes(searchQuery) || pmOf(h).includes(searchQuery.toLowerCase()) || h.status?.includes(searchQuery.toLowerCase()))
+                              .map(h => (
                               <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
                                 <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>
@@ -1102,7 +1203,174 @@ export const DashboardPage = () => {
                         </table>
                       </div>
                       <div style={{ padding: 24, textAlign: 'center' }}>
-                        <p style={{ fontSize: 13, color: '#64748b' }}>To add or remove staff, please use the <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontWeight: 600 }}>Clerk Organization Dashboard</a></p>
+                        <p style={{ fontSize: 13, color: '#64748b' }}>Please manage staff members and permissions via the <span style={{ color: '#2563eb', fontWeight: 700 }}>Mobile Application</span>.</p>
+                      </div>
+                    </>
+                  ) : managementView === 'ingredients' ? (
+                    <>
+                      <div className="pro-manage-header">
+                        <div>
+                          <h2 className="pro-manage-title">Ingredients</h2>
+                          <span style={{ fontSize: 13, color: '#64748b' }}>Stock & Raw Materials</span>
+                        </div>
+                      </div>
+                      <div className="pro-table-scroll">
+                        <table className="pro-table">
+                          <thead>
+                            <tr>
+                              <th>Material</th>
+                              <th>Stock</th>
+                              <th align="right">Cost/Unit</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ingredients.map(ing => (
+                              <tr key={ing.$id}>
+                                <td>
+                                  <div className="manage-item-cell">
+                                    <Package size={16} color="#64748b" />
+                                    <span className="manage-item-name">{ing.name}</span>
+                                  </div>
+                                </td>
+                                <td>
+                                  <span style={{ fontWeight: 700, color: (ing.stockQtyBase || 0) < (ing.minStockThreshold || 0) ? '#ef4444' : '#1e293b' }}>
+                                    {ing.stockQtyBase?.toLocaleString()} {ing.baseUnit}
+                                  </span>
+                                </td>
+                                <td align="right">Rp{ing.costPerUnit?.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : managementView === 'recipes' ? (
+                    <>
+                      <div className="pro-manage-header">
+                        <div>
+                          <h2 className="pro-manage-title">Recipes</h2>
+                          <span style={{ fontSize: 13, color: '#64748b' }}>Production Guides</span>
+                        </div>
+                      </div>
+                      <div className="pro-table-scroll">
+                        <table className="pro-table">
+                          <thead>
+                            <tr>
+                              <th>Recipe Name</th>
+                              <th>Yield</th>
+                              <th align="right">Overhead</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {recipes.map(rec => (
+                              <tr key={rec.$id}>
+                                <td>
+                                  <div className="manage-item-cell">
+                                    <Utensils size={16} color="#64748b" />
+                                    <span className="manage-item-name">{rec.name}</span>
+                                  </div>
+                                </td>
+                                <td>{rec.yield} units</td>
+                                <td align="right">{rec.overheadPercent}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : managementView === 'expenses' ? (
+                    <>
+                      <div className="pro-manage-header">
+                        <div>
+                          <h2 className="pro-manage-title">Expenses</h2>
+                          <span style={{ fontSize: 13, color: '#64748b' }}>Total: Rp{stats.totalExpenses.toLocaleString()}</span>
+                        </div>
+                        <div className="pro-manage-actions">
+                          <button className="pro-btn-primary" onClick={handleCreate}>
+                            <Plus size={16} /> <span className="hide-mobile">Add Expense</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="pro-table-scroll">
+                        <table className="pro-table">
+                          <thead>
+                            <tr>
+                              <th>Description</th>
+                              <th>Date</th>
+                              <th align="right">Amount</th>
+                              <th align="right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...expenses]
+                              .sort((a,b) => tsOf(b as any) - tsOf(a as any))
+                              .filter(exp => !searchQuery || exp.description?.toLowerCase().includes(searchQuery.toLowerCase()) || exp.$id.includes(searchQuery))
+                              .map(exp => (
+                              <tr key={exp.$id}>
+                                <td>
+                                  <div className="manage-item-cell">
+                                    <Receipt size={16} color="#f59e0b" />
+                                    <span className="manage-item-name">{exp.description || 'Custom Expense'}</span>
+                                  </div>
+                                </td>
+                                <td>{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
+                                <td align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
+                                <td align="right">
+                                  <div className="manage-row-actions">
+                                    <button className="icon-btn edit-btn" onClick={() => handleEdit(exp)}><Edit2 size={14} /></button>
+                                    <button className="icon-btn delete-btn" onClick={() => handleDelete(exp.$id)}><Trash2 size={14} /></button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : managementView === 'stock_changes' ? (
+                    <>
+                      <div className="pro-manage-header">
+                        <div>
+                          <h2 className="pro-manage-title">Stock History</h2>
+                          <span style={{ fontSize: 13, color: '#64748b' }}>Inventory Movement</span>
+                        </div>
+                      </div>
+                      <div className="pro-table-scroll">
+                        <table className="pro-table">
+                          <thead>
+                            <tr>
+                              <th>Ingredient</th>
+                              <th>Change</th>
+                              <th>Reason</th>
+                              <th align="right">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...stockAdjustments].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 100).map(st => {
+                              const ingred = ingredients.find(i => i.$id === st.ingredientId);
+                              const isPositive = st.deltaBase > 0;
+                              return (
+                                <tr key={st.$id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      <div style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
+                                        {isPositive ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+                                      </div>
+                                      <span className="manage-item-name">{ingred?.name || 'Loading...'}</span>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontWeight: 800, color: isPositive ? '#10b981' : '#ef4444' }}>
+                                      {isPositive ? '+' : ''}{st.deltaBase} {ingred?.baseUnit}
+                                    </span>
+                                  </td>
+                                  <td><span className="text-muted" style={{ fontSize: '12px' }}>{st.reason || 'Correction'}</span></td>
+                                  <td align="right">{new Date(st.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </>
                   ) : (
@@ -1194,54 +1462,37 @@ export const DashboardPage = () => {
                       </ResponsiveContainer>
                     </div>
 
-                    <div className="pro-two-col">
-                      <div className="pro-card">
-                        <div className="pro-card-header">
-                          <h3 className="pro-card-title">Status</h3>
-                          <span style={{ fontSize: 12, color: '#94a3b8' }}>Payment Types</span>
-                        </div>
-                        <ResponsiveContainer width="100%" height={160}>
-                          <PieChart>
-                            <Pie data={stats.paymentData} innerRadius={50} outerRadius={70} dataKey="value" stroke="none">
-                              {stats.paymentData.map((_, index) => <Cell key={index} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />)}
-                            </Pie>
-                            <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 16 }}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ color: '#10b981', fontSize: 10, fontWeight: 700 }}>● CASH</div>
-                            <div style={{ fontSize: 14, fontWeight: 700 }}>{stats.paymentData.find(x => x.name.toLowerCase() === 'cash')?.value ? Math.round((stats.paymentData.find(x => x.name.toLowerCase() === 'cash')!.value / Math.max(stats.revenue, 1)) * 100) : 0}%</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ color: '#3b82f6', fontSize: 10, fontWeight: 700 }}>● QRIS</div>
-                            <div style={{ fontSize: 14, fontWeight: 700 }}>{stats.paymentData.find(x => x.name.toLowerCase() === 'qris')?.value ? Math.round((stats.paymentData.find(x => x.name.toLowerCase() === 'qris')!.value / Math.max(stats.revenue, 1)) * 100) : 0}%</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="pro-card">
+                     <div className="pro-card">
                         <div className="pro-card-header">
                           <h3 className="pro-card-title">Store Data</h3>
+                          <span style={{ fontSize: 12, color: '#94a3b8' }}>Business Snapshot</span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f1f5f9' }}>
-                            <span style={{ fontSize: 13, color: '#64748b' }}>Total Products</span>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: '#3b82f6' }}>{products.length}</span>
+                        <div className="store-data-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                            <Package size={18} color="var(--pro-primary)" />
+                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Products</div>
+                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{products.length}</div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #f1f5f9' }}>
-                            <span style={{ fontSize: 13, color: '#64748b' }}>Categories</span>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: '#3b82f6' }}>{categories.length}</span>
+                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                            <Tags size={18} color="#facc15" />
+                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Categories</div>
+                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{categories.length}</div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8 }}>
-                            <span style={{ fontSize: 13, color: '#64748b' }}>Today's Sales</span>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: '#3b82f6' }}>{stats.todaySalesCount}</span>
+                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                            <ArrowLeftRight size={18} color="#10b981" />
+                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Sales</div>
+                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{stats.todaySalesCount}</div>
+                          </div>
+                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                            <Receipt size={18} color="#ef4444" />
+                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Expenses</div>
+                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#ef4444' }}>Rp{(stats.totalExpenses / 1000).toFixed(0)}k</div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="pro-home-right">
+                    <div className="pro-home-right">
                     <div className="pro-card">
                       <div className="pro-card-header">
                         <h3 className="pro-card-title">Recent TX</h3>
@@ -1271,7 +1522,7 @@ export const DashboardPage = () => {
 
                     <div className="pro-card">
                       <div className="pro-card-header">
-                        <h3 className="pro-card-title">All Listing</h3>
+                        <h3 className="pro-card-title">Most Popular</h3>
                       </div>
                       <div className="pro-listing-grid">
                         {products.filter(p => !!p.imageUrl).slice(0, 9).map(match => {
@@ -1319,26 +1570,25 @@ export const DashboardPage = () => {
                       </label>
                     </div>
                   </div>
-
                   <div className="dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
-                    <div className="pro-card" style={{ background: 'var(--pro-primary)', color: 'white', borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
-                      <TrendingUp size={24} color="white" style={{ marginBottom: '12px' }} />
-                      <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8, marginBottom: '6px' }}>Net Sales</span>
+                    <div className="pro-card" style={{ background: '#f8fafc', color: '#1e293b', borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
+                      <TrendingUp size={24} color="var(--pro-primary)" style={{ marginBottom: '12px' }} />
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Net Sales</span>
                       <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900 }}>Rp{stats.revenue.toLocaleString()}</span>
                     </div>
-                    <div className="pro-card" style={{ borderLeft: `4px solid ${stats.netProfit >= 0 ? '#10b981' : '#ef4444'}`, padding: '20px' }}>
+                    <div className="pro-card" style={{ background: '#f8fafc', borderLeft: `4px solid ${stats.netProfit >= 0 ? '#10b981' : '#ef4444'}`, padding: '20px' }}>
                       <Activity size={24} color={stats.netProfit >= 0 ? '#10b981' : '#ef4444'} style={{ marginBottom: '12px' }} />
                       <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Profit</span>
                       <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900, color: stats.netProfit >= 0 ? '#10b981' : '#ef4444' }}>
                         {stats.netProfit < 0 ? '-' : ''}Rp{Math.abs(stats.netProfit).toLocaleString()}
                       </span>
                     </div>
-                    <div className="pro-card" style={{ borderLeft: '4px solid #facc15', padding: '20px' }}>
+                    <div className="pro-card" style={{ background: '#f8fafc', borderLeft: '4px solid #facc15', padding: '20px' }}>
                       <ArrowLeftRight size={24} color="#facc15" style={{ marginBottom: '12px' }} />
                       <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Transactions</span>
                       <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900, color: '#1e293b' }}>{stats.transactionCount}</span>
                     </div>
-                    <div className="pro-card" style={{ borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
+                    <div className="pro-card" style={{ background: '#f8fafc', borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
                       <Package size={24} color="var(--pro-primary)" style={{ marginBottom: '12px' }} />
                       <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Items Sold</span>
                       <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900, color: '#1e293b' }}>{stats.itemsSold.toLocaleString()}</span>
@@ -1346,15 +1596,15 @@ export const DashboardPage = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px' }}>
+                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px', background: '#f8fafc' }}>
                       <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Avg. Ticket</span>
                       <span style={{ fontSize: '15px', fontWeight: 900, color: '#1e293b' }}>Rp{stats.avgTicket.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                     </div>
-                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px' }}>
+                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px', background: '#f8fafc' }}>
                       <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Margin</span>
                       <span style={{ fontSize: '15px', fontWeight: 900, color: stats.margin >= 0 ? '#10b981' : '#ef4444' }}>{stats.margin.toFixed(1)}%</span>
                     </div>
-                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px' }}>
+                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px', background: '#f8fafc' }}>
                       <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Expenses</span>
                       <span style={{ fontSize: '15px', fontWeight: 900, color: '#ef4444' }}>-Rp{stats.totalExpenses.toLocaleString()}</span>
                     </div>
@@ -1364,11 +1614,11 @@ export const DashboardPage = () => {
                     <h3 className="pro-card-title">Revenue Trend</h3>
                     <div style={{ marginTop: '20px' }}>
                       <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={stats.chartData}>
-                          <XAxis dataKey="label" stroke={MUTED} fontSize={11} />
-                          <YAxis stroke={MUTED} fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                          <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
-                          <Area type="monotone" dataKey="value" stroke={PRIMARY} fill={PRIMARY} fillOpacity={0.1} strokeWidth={2} />
+                        <AreaChart data={stats.chartData} margin={{ left: -20 }}>
+                          <XAxis dataKey="label" stroke={MUTED} fontSize={11} axisLine={false} tickLine={false} />
+                          <YAxis stroke={MUTED} fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
+                          <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                          <Area type="monotone" dataKey="value" stroke={PRIMARY} fill={PRIMARY} fillOpacity={0.05} strokeWidth={3} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -1380,7 +1630,7 @@ export const DashboardPage = () => {
                       <div style={{ marginTop: '20px' }}>
                         <ResponsiveContainer width="100%" height={250}>
                           <BarChart data={stats.topHours}>
-                            <XAxis dataKey="name" stroke={MUTED} fontSize={11} />
+                            <XAxis dataKey="name" stroke={MUTED} fontSize={11} axisLine={false} tickLine={false} />
                             <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} cursor={{ fill: '#f1f5f9' }} />
                             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                               {stats.topHours.map((_, index) => {
@@ -1408,13 +1658,14 @@ export const DashboardPage = () => {
                               outerRadius={80}
                               paddingAngle={5}
                               dataKey="value"
+                              stroke="none"
                             >
                               {stats.paymentData.map((_, index) => (
                                 <Cell key={index} fill={['#3d7066', '#10b981', '#f59e0b', '#ef4444', '#94a3b8'][index % 5]} />
                               ))}
                             </Pie>
                             <Tooltip formatter={(v) => `Rp${Number(v).toLocaleString()}`} />
-                            <Legend />
+                            <Legend verticalAlign="bottom" height={36} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1428,13 +1679,18 @@ export const DashboardPage = () => {
                         {stats.bestSelling.slice(0, 8).map((p, idx) => (
                           <div key={p.id} className="prod-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div className="prod-rank" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, color: '#475569' }}>{idx + 1}</div>
+                              <div className="prod-rank" style={{ 
+                                width: '32px', height: '32px', borderRadius: '50%', 
+                                background: idx === 0 ? 'linear-gradient(135deg, #10b981, #059669)' : idx === 1 ? 'linear-gradient(135deg, #facc15, #ca8a04)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#e2e8f0', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 900, color: idx < 3 ? 'white' : '#475569',
+                                boxShadow: idx < 3 ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none'
+                              }}>{idx + 1}</div>
                               <div className="prod-info" style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span className="prod-name" style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b' }}>{p.name}</span>
-                                <span className="prod-qty" style={{ fontSize: '12px', color: '#64748b' }}>{p.qty} sold</span>
+                                <span className="prod-qty" style={{ fontSize: '12px', color: '#64748b' }}>{p.qty} items sold</span>
                               </div>
                             </div>
-                            <div className="prod-revenue" style={{ fontWeight: 800, color: '#3d7066' }}>Rp{p.revenue.toLocaleString()}</div>
+                            <div className="prod-revenue" style={{ fontWeight: 800, color: idx === 0 ? '#10b981' : '#3d7066' }}>Rp{p.revenue.toLocaleString()}</div>
                           </div>
                         ))}
                       </div>
@@ -1475,6 +1731,7 @@ export const DashboardPage = () => {
               initialData={editingItem}
               categories={categories}
               recipes={recipes}
+              allProducts={products}
               loading={formLoading}
             />
           )}
