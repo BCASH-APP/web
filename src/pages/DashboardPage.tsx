@@ -138,6 +138,285 @@ const PAYMENT_LABELS: Record<string, string> = {
   'e-wallet': 'E-Wallet',
 };
 
+
+type ModalProps = {
+  type: string;
+  onClose: () => void;
+  onSave: (data: any) => Promise<void>;
+  initialData?: any;
+  categories: CategoryDoc[];
+  recipes: RecipeDoc[];
+  loading: boolean;
+};
+
+const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, loading }) => {
+  const [formData, setFormData] = useState<any>(initialData || {});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void onSave(formData);
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <header className="modal-header">
+          <h3>{initialData ? 'Edit' : 'Add New'} {type.slice(0, -1)}</h3>
+          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+        </header>
+        <form onSubmit={handleSubmit} className="modal-form">
+          {type === 'products' && (
+            <>
+              <div className="form-group">
+                <label>Product Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Special Croissant"
+                />
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  required
+                  value={formData.categoryId || ''}
+                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c.$id} value={c.$id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                {!formData.usesRecipe && (
+                  <div className="form-group">
+                    <label>HPP / Cost (Rp)</label>
+                    <input
+                      type="number"
+                      required={!formData.usesRecipe}
+                      value={formData.cost || ''}
+                      onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
+                      placeholder="8000"
+                    />
+                  </div>
+                )}
+                <div className="form-group">
+                  <label>Price (Rp)</label>
+                  <input
+                    type="number"
+                    required
+                    value={formData.price || ''}
+                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                    placeholder="15000"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Product Image</label>
+                <div className="image-upload-zone" onClick={() => document.getElementById('prod-img-input')?.click()}>
+                  {formData.imageUrl ? (
+                    <img 
+                      src={formData.imageUrl.startsWith('http') ? formData.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${formData.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
+                      className="uploaded-preview" 
+                      alt="Preview" 
+                    />
+                  ) : (
+                    <div style={{ textAlign: 'center' }}>
+                      <Plus size={32} color="#94a3b8" />
+                      <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                        Click to Upload Image
+                      </div>
+                    </div>
+                  )}
+                  <input 
+                    id="prod-img-input"
+                    type="file" 
+                    hidden
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const resp = await storage.createFile(bucketId, 'unique()', file);
+                        setFormData({ ...formData, imageUrl: resp.$id, imageFileId: resp.$id });
+                      } catch (err) {
+                        alert('Upload failed');
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <div className="switch-group">
+                  <div className="switch-label-wrap">
+                    <label style={{ margin: 0 }}>Use HPP (Recipes)</label>
+                    <span className="switch-subtext">Link to recipe for stock & cost tracking</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.usesRecipe || false}
+                    onChange={(e) => setFormData({ ...formData, usesRecipe: e.target.checked })}
+                    style={{ width: 'auto' }}
+                  />
+                </div>
+              </div>
+
+              {formData.usesRecipe && (
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label>Link to Recipe</label>
+                  <select
+                    required={formData.usesRecipe}
+                    value={formData.recipeId || ''}
+                    onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
+                  >
+                    <option value="">Select Recipe</option>
+                    {recipes.map((r) => (
+                      <option key={r.$id} value={r.$id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+
+          {type === 'categories' && (
+            <>
+              <div className="form-group">
+                <label>Category Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Pastry"
+                />
+              </div>
+              <div className="form-group">
+                <label>Brand Color</label>
+                <div className="color-input-wrap">
+                  <input
+                    type="color"
+                    value={formData.color || '#3d7066'}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  />
+                  <code>{formData.color || '#3d7066'}</code>
+                </div>
+              </div>
+            </>
+          )}
+
+          {(type === 'ingredients' || type === 'recipes') && (
+            <div className="modal-premium-notice">
+              <Lock size={32} />
+              <h4>Coming Soon to Web</h4>
+              <p>Advanced Ingredients & Recipe management is currently best handled via the mobile app. We are syncronizing these detailed forms for web.</p>
+            </div>
+          )}
+
+          <footer className="modal-footer">
+            <button type="button" className="app-btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" className="app-btn-primary" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) {
+  const totalHpp = items.reduce((sum: number, it: any) => sum + itemCost(it), 0);
+  
+  return (
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <header className="modal-header">
+          <h3>Sale Details</h3>
+          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+        </header>
+        <div className="modal-content" style={{ padding: '2rem' }}>
+          <div className="sale-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.5rem' }}>
+            <div>
+              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Transaction ID</label>
+              <div className="font-mono text-sm" style={{ color: '#64748b' }}>{sale.$id}</div>
+            </div>
+            <div>
+              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Date & Time</label>
+              <div style={{ fontWeight: 700, color: '#1e293b' }}>{new Date(tsOf(sale)).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</div>
+            </div>
+            <div>
+              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Status</label>
+              <span className={`badge-${sale.status || 'completed'}`} style={{ fontSize: '0.7rem' }}>
+                {(sale.status || 'completed').toUpperCase()}
+              </span>
+            </div>
+          </div>
+          
+          <div className="sale-items-list" style={{ marginTop: '2rem' }}>
+            <h4 style={{ marginBottom: '1rem', fontWeight: 800, color: '#1e293b' }}>Items Sold</h4>
+            <div className="items-scroll-box" style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '0 1rem' }}>
+              {items.map((it: any) => (
+                <div key={it.$id} className="sale-item-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {productsById[it.productId]?.imageUrl && (
+                      <img 
+                        src={productsById[it.productId].imageUrl.startsWith('http') ? productsById[it.productId].imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${productsById[it.productId].imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
+                        className="sale-item-thumb" 
+                        alt="" 
+                        style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }}
+                      />
+                    )}
+                    <div>
+                      <div className="font-bold" style={{ color: '#1e293b' }}>{productsById[it.productId]?.name || 'Unknown Item'}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        {it.quantity} x Rp{(it.priceEach || it.price || 0).toLocaleString()}
+                        {itemCost(it) > 0 && <span style={{ marginLeft: '8px', color: '#94a3b8' }}>(Cost: Rp{itemCost(it).toLocaleString()})</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="font-bold" style={{ color: '#1e293b' }}>Rp{itemRevenue(it).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="sale-summary-card" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <span className="text-muted">Payment Method</span>
+              <span className="font-bold" style={{ color: '#1e293b' }}>{(sale.paymentMethod || 'cash').toUpperCase()}</span>
+            </div>
+            {totalHpp > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span className="text-muted">Total Cost (HPP)</span>
+                <span className="font-bold" style={{ color: '#ef4444' }}>Rp{totalHpp.toLocaleString()}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '2px dashed #cbd5e1' }}>
+              <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem' }}>Grand Total</span>
+              <span style={{ fontWeight: 900, color: PRIMARY, fontSize: '1.5rem' }}>Rp{(sale.total || 0).toLocaleString()}</span>
+            </div>
+          </div>
+
+          <footer className="modal-footer" style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+            {sale.status !== 'canceled' && (
+              <button className="app-btn-danger" onClick={() => { onCancel(sale.$id); onClose(); }} style={{ padding: '0.75rem 1.5rem' }}>
+                Cancel Sale
+              </button>
+            )}
+            <button className="app-btn-primary" onClick={onClose} style={{ padding: '0.75rem 2rem' }}>Close</button>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const DashboardPage = () => {
   const { planId, isPremium, clerkUserId } = useUserData();
   const { userMemberships, isLoaded: orgsLoaded } = useOrganizationList({ userMemberships: true });
@@ -579,15 +858,17 @@ export const DashboardPage = () => {
           </div>
           
           <div className="topbar-right">
-            <div className="dashboard-org-pill">
-              <span className="org-label">Store</span>
-              <select className="org-select" value={activeStoreId} onChange={(e) => setActiveStoreId(e.target.value)}>
-                {organizationList.map((m) => (
-                  <option key={m.organization.id} value={m.organization.id}>
-                    {m.organization.name}
-                  </option>
-                ))}
-              </select>
+            <div className="topbar-actions-row">
+              <div className="dashboard-org-pill">
+                <span className="org-label">Store</span>
+                <select className="org-select" value={activeStoreId} onChange={(e) => setActiveStoreId(e.target.value)}>
+                  {organizationList.map((m) => (
+                    <option key={m.organization.id} value={m.organization.id}>
+                      {m.organization.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <a href="dashingbakery://" className="open-app-btn" title="Open BCash App">
                 <Smartphone size={16} /> <span className="hide-mobile">Open App</span>
               </a>
@@ -603,395 +884,373 @@ export const DashboardPage = () => {
         <div className="dashboard-loading-state">Loading Store Data...</div>
       ) : (
         <>
-          <div className="dashboard-tabs">
-            <button
-              className={`dashboard-tab-btn ${activeTab === 'home' ? 'active' : ''}`}
-              onClick={() => setActiveTab('home')}
-            >
-              <LayoutDashboard size={16} /> Home
-            </button>
-            {hasAnalyticsAccess ? (
-              <button
-                className={`dashboard-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-                onClick={() => setActiveTab('analytics')}
-              >
-                <BarChart2 size={16} /> Analytics
-              </button>
-            ) : (
-              <button className="dashboard-tab-btn locked" title="Premium Required">
-                <Lock size={14} /> Analytics
-              </button>
-            )}
-          </div>
 
-          {activeTab === 'home' ? (
-            <div className="dashboard-mobile-parity">
-              {managementView ? (
-                <div className="management-view-container">
-                  <header className="management-view-header">
-                    <button className="back-btn" onClick={() => setManagementView(null)} title="Back to Dashboard">
-                      <ArrowLeft size={18} /> <span className="hide-mobile">Back to Dashboard</span>
-                    </button>
-                    <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
-                    {(managementView === 'products' || managementView === 'categories') && (
-                      <button className="app-btn-primary add-item-btn" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
-                        <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
-                      </button>
-                    )}
-                  </header>
-                  
-                  <div className="management-list-card page-card">
-                    {managementView === 'products' ? (
-                      <div className="manage-list-items">
-                        <div className="manage-list-info">
-                          <span>Total: {products.length} items</span>
-                        </div>
-                        <div className="dashboard-table-wrap">
-                          <table className="dashboard-table">
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th align="right">HPP</th>
-                                <th align="right">Price</th>
-                                <th align="right">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {products.map(p => (
-                                <tr key={p.$id}>
-                                  <td>
-                                    <div className="manage-item-cell">
-                                      {p.imageUrl ? (
-                                        <img 
-                                          src={p.imageUrl.startsWith('http') ? p.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${p.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
-                                          alt="" 
-                                          className="product-thumb-circle" 
-                                        />
-                                      ) : (
-                                        <div className="product-thumb-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                          <Package size={16} color="#cbd5e1" />
-                                        </div>
-                                      )}
-                                      <span className="manage-item-name">
-                                        {p.name || 'Unnamed Product'}
-                                        {p.usesRecipe && <span className="hpp-badge">HPP</span>}
-                                      </span>
+          {managementView ? (
+            <div className="management-view-container">
+              <header className="management-view-header">
+                <button className="back-btn" onClick={() => setManagementView(null)} title="Back to Dashboard">
+                  <ArrowLeft size={18} /> <span className="hide-mobile">Back to Dashboard</span>
+                </button>
+                <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
+                {(managementView === 'products' || managementView === 'categories') && (
+                  <button className="app-btn-primary add-item-btn" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
+                    <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
+                  </button>
+                )}
+              </header>
+              
+              <div className="management-list-card page-card">
+                {managementView === 'products' ? (
+                  <div className="manage-list-items">
+                    <div className="manage-list-info">
+                      <span>Total: {products.length} items</span>
+                    </div>
+                    <div className="dashboard-table-wrap">
+                      <table className="dashboard-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th align="right">HPP</th>
+                            <th align="right">Price</th>
+                            <th align="right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {products.map(p => (
+                            <tr key={p.$id}>
+                              <td>
+                                <div className="manage-item-cell">
+                                  {p.imageUrl ? (
+                                    <img 
+                                      src={p.imageUrl.startsWith('http') ? p.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${p.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
+                                      alt="" 
+                                      className="product-thumb-circle" 
+                                    />
+                                  ) : (
+                                    <div className="product-thumb-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <Package size={16} color="#cbd5e1" />
                                     </div>
-                                  </td>
-                                  <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
-                                  <td align="right" className="hpp-val-cell">
-                                    {p.usesRecipe ? (
-                                      <span className="hpp-hint" title="Configured via Recipe">Recipe Based</span>
-                                    ) : (
-                                      <span>Rp{(p.cost || 0).toLocaleString()}</span>
-                                    )}
-                                  </td>
-                                  <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
-                                  <td align="right">
-                                    <div className="manage-row-actions">
-                                      <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(p)}><Edit2 size={14} /></button>
-                                      <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(p.$id)}><Trash2 size={14} /></button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                                  )}
+                                  <span className="manage-item-name">
+                                    {p.name || 'Unnamed Product'}
+                                    {p.usesRecipe && <span className="hpp-badge">HPP</span>}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
+                              <td align="right" className="hpp-val-cell">
+                                {p.usesRecipe ? (
+                                  <span className="hpp-hint" title="Configured via Recipe">Recipe Based</span>
+                                ) : (
+                                  <span>Rp{(p.cost || 0).toLocaleString()}</span>
+                                )}
+                              </td>
+                              <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
+                              <td align="right">
+                                <div className="manage-row-actions">
+                                  <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(p)}><Edit2 size={14} /></button>
+                                  <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(p.$id)}><Trash2 size={14} /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : managementView === 'categories' ? (
+                  <div className="manage-list-items">
+                    <div className="manage-list-info">
+                      <span>Total: {categories.length} categories</span>
+                    </div>
+                    <div className="dashboard-table-wrap">
+                      <table className="dashboard-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Items</th>
+                            <th align="right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.map(c => (
+                            <tr key={c.$id}>
+                              <td>
+                                <div className="manage-item-cell">
+                                  <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
+                                  <span className="manage-item-name">{c.name || 'Unnamed'}</span>
+                                </div>
+                              </td>
+                              <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
+                              <td align="right">
+                                <div className="manage-row-actions">
+                                  <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
+                                  <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(c.$id)}><Trash2 size={14} /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : managementView === 'transactions' ? (
+                  <div className="manage-list-items">
+                    <div className="manage-list-info">
+                      <span>Total: {stats.listHeaders.length} sales</span>
+                    </div>
+                    <div className="dashboard-table-wrap">
+                      <table className="dashboard-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th align="right">Total</th>
+                            <th align="right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...stats.listHeaders].reverse().map(h => (
+                            <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
+                              <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                              <td>{(h.status || 'completed').toUpperCase()}</td>
+                              <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
+                              <td>
+                                <span className={`badge-${h.status || 'completed'}`}>
+                                  {(h.status || 'completed').toUpperCase()}
+                                </span>
+                              </td>
+                              <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                              <td align="right">
+                                <div className="manage-row-actions">
+                                  <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
+                                  {h.status !== 'canceled' && (
+                                    <button className="icon-btn cancel-btn" title="Cancel Sale" onClick={() => handleCancelSale(h.$id)}><X size={14} /></button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : managementView === 'staff' ? (
+                  <div className="manage-list-items">
+                    <div className="manage-list-info">
+                      <span>Active Team Members</span>
+                    </div>
+                    <div className="dashboard-table-wrap">
+                      <table className="dashboard-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th align="right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {organizationList.map(m => (
+                            <tr key={m.id}>
+                              <td>
+                                <div className="manage-item-cell">
+                                  {m.publicUserData?.imageUrl && (
+                                    <img src={m.publicUserData.imageUrl} alt="" className="staff-avatar" />
+                                  )}
+                                  <span className="manage-item-name">{m.publicUserData?.firstName} {m.publicUserData?.lastName}</span>
+                                </div>
+                              </td>
+                              <td>{m.publicUserData?.identifier}</td>
+                              <td>
+                                <span className="role-badge">{(m.role || 'member').toUpperCase()}</span>
+                              </td>
+                              <td align="right">
+                                <span className="status-online">ACTIVE</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="manage-list-footer">
+                      <p className="staff-help">To add or remove staff, please use the <a href="https://clerk.com" target="_blank" rel="noopener noreferrer">Clerk Organization Dashboard</a></p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="management-empty-state">
+                    {(managementView === 'ingredients' || managementView === 'recipes') ? (
+                      <>
+                        <Smartphone size={48} className="empty-icon-large" />
+                        <h3>Mobile Exclusive Feature</h3>
+                        <p>Managing {managementView} is currently only available through our mobile application. 
+                           Please use the BCash app to manage your stock, cost of goods, and recipes.</p>
+                        <div className="empty-actions">
+                          <a href="dashingbakery://" className="open-app-btn large">
+                            <Smartphone size={18} /> Open BCash App
+                          </a>
+                          <button className="app-btn-neutral" onClick={() => setManagementView(null)}>Back to Dashboard</button>
                         </div>
-                      </div>
-                    ) : managementView === 'categories' ? (
-                      <div className="manage-list-items">
-                        <div className="manage-list-info">
-                          <span>Total: {categories.length} categories</span>
-                        </div>
-                        <div className="dashboard-table-wrap">
-                          <table className="dashboard-table">
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Items</th>
-                                <th align="right">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {categories.map(c => (
-                                <tr key={c.$id}>
-                                  <td>
-                                    <div className="manage-item-cell">
-                                      <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
-                                      <span className="manage-item-name">{c.name || 'Unnamed'}</span>
-                                    </div>
-                                  </td>
-                                  <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
-                                  <td align="right">
-                                    <div className="manage-row-actions">
-                                      <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
-                                      <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(c.$id)}><Trash2 size={14} /></button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ) : managementView === 'transactions' ? (
-                      <div className="manage-list-items">
-                        <div className="manage-list-info">
-                          <span>Total: {stats.listHeaders.length} sales</span>
-                        </div>
-                        <div className="dashboard-table-wrap">
-                          <table className="dashboard-table">
-                            <thead>
-                              <tr>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th>Payment</th>
-                                <th align="right">Total</th>
-                                <th align="right">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {[...stats.listHeaders].reverse().map(h => (
-                                <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
-                                  <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                                  <td>{(h.status || 'completed').toUpperCase()}</td>
-                                  <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
-                                  <td>
-                                    <span className={`badge-${h.status || 'completed'}`}>
-                                      {(h.status || 'completed').toUpperCase()}
-                                    </span>
-                                  </td>
-                                  <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
-                                  <td align="right">
-                                    <div className="manage-row-actions">
-                                      <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
-                                      {h.status !== 'canceled' && (
-                                        <button className="icon-btn cancel-btn" title="Cancel Sale" onClick={() => handleCancelSale(h.$id)}><X size={14} /></button>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ) : managementView === 'staff' ? (
-                      <div className="manage-list-items">
-                        <div className="manage-list-info">
-                          <span>Active Team Members</span>
-                        </div>
-                        <div className="dashboard-table-wrap">
-                          <table className="dashboard-table">
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th align="right">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {organizationList.map(m => (
-                                <tr key={m.id}>
-                                  <td>
-                                    <div className="manage-item-cell">
-                                      {m.publicUserData?.imageUrl && (
-                                        <img src={m.publicUserData.imageUrl} alt="" className="staff-avatar" />
-                                      )}
-                                      <span className="manage-item-name">{m.publicUserData?.firstName} {m.publicUserData?.lastName}</span>
-                                    </div>
-                                  </td>
-                                  <td>{m.publicUserData?.identifier}</td>
-                                  <td>
-                                    <span className="role-badge">{(m.role || 'member').toUpperCase()}</span>
-                                  </td>
-                                  <td align="right">
-                                    <span className="status-online">ACTIVE</span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        <div className="manage-list-footer">
-                          <p className="staff-help">To add or remove staff, please use the <a href="https://clerk.com" target="_blank" rel="noopener noreferrer">Clerk Organization Dashboard</a></p>
-                        </div>
-                      </div>
+                      </>
                     ) : (
-                      <div className="management-empty-state">
-                        {(managementView === 'ingredients' || managementView === 'recipes') ? (
-                          <>
-                            <Smartphone size={48} className="empty-icon-large" />
-                            <h3>Mobile Exclusive Feature</h3>
-                            <p>Managing {managementView} is currently only available through our mobile application. 
-                               Please use the BCash app to manage your stock, cost of goods, and recipes.</p>
-                            <div className="empty-actions">
-                              <a href="dashingbakery://" className="open-app-btn large">
-                                <Smartphone size={18} /> Open BCash App
-                              </a>
-                              <button className="app-btn-neutral" onClick={() => setManagementView(null)}>Back to Dashboard</button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <Search size={32} className="empty-icon" />
-                            <p>Managing {managementView} is currently being synchronized...</p>
-                            <button className="app-btn-secondary" onClick={() => setManagementView(null)}>Go Back</button>
-                          </>
-                        )}
-                      </div>
+                      <>
+                        <Search size={32} className="empty-icon" />
+                        <p>Managing {managementView} is currently being synchronized...</p>
+                        <button className="app-btn-secondary" onClick={() => setManagementView(null)}>Go Back</button>
+                      </>
                     )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : activeTab === 'home' ? (
+            <div className="dashboard-mobile-parity">
+              <>
+                <div className="mobile-parity-card">
+                  <div className="mobile-card-pattern" />
+                  <div className="mobile-card-header">
+                    <span className="mobile-card-subtitle">Today's Revenue</span>
+                    <span className="mobile-card-org">{storeName}</span>
+                  </div>
+                  <h2 className="mobile-card-revenue">Rp{stats.todayRevenue.toLocaleString()}</h2>
+                  <div className="mobile-card-stats">
+                    <div className="mobile-stat">
+                      <span className="mobile-stat-label">Transactions</span>
+                      <span className="mobile-stat-val">{stats.todaySalesCount}</span>
+                    </div>
+                    <div className="mobile-stat-divider" />
+                    <div className="mobile-stat">
+                      <span className="mobile-stat-label">Total Revenue</span>
+                      <span className="mobile-stat-val">Rp{(stats.revenue / 1000).toFixed(0)}k</span>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <>
-                  <div className="mobile-parity-card">
-                    <div className="mobile-card-pattern" />
-                    <div className="mobile-card-header">
-                      <span className="mobile-card-subtitle">Today's Revenue</span>
-                      <span className="mobile-card-org">{storeName}</span>
+
+                <div className="dashboard-content-grid">
+                  <div className="dashboard-card action-section manage-store-card">
+                    <div className="card-header-with-action">
+                      <h3 className="dashboard-card-title">Manage Store</h3>
+                      <span className="manage-badge">MANAGEMENT SYSTEM</span>
                     </div>
-                    <h2 className="mobile-card-revenue">Rp{stats.todayRevenue.toLocaleString()}</h2>
-                    <div className="mobile-card-stats">
-                      <div className="mobile-stat">
-                        <span className="mobile-stat-label">Transactions</span>
-                        <span className="mobile-stat-val">{stats.todaySalesCount}</span>
+                    <div className="manage-grid">
+                      <div className="manage-item" onClick={() => setManagementView('products')}>
+                        <div className="manage-icon prods"><ShoppingBag size={22} /></div>
+                        <div className="manage-text">
+                          <span className="manage-label">Products</span>
+                          <span className="manage-desc">Add, Edit & Remove items</span>
+                        </div>
+                        <ChevronRight size={16} className="manage-arrow" />
                       </div>
-                      <div className="mobile-stat-divider" />
-                      <div className="mobile-stat">
-                        <span className="mobile-stat-label">Total Revenue</span>
-                        <span className="mobile-stat-val">Rp{(stats.revenue / 1000).toFixed(0)}k</span>
+                      
+                      <div className="manage-item" onClick={() => setManagementView('categories')}>
+                        <div className="manage-icon cats"><Tags size={22} /></div>
+                        <div className="manage-text">
+                          <span className="manage-label">Categories</span>
+                          <span className="manage-desc">Organize your menu</span>
+                        </div>
+                        <ChevronRight size={16} className="manage-arrow" />
+                      </div>
+
+                      <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('ingredients')}>
+                        <div className="manage-icon ings"><Package size={22} /></div>
+                        <div className="manage-text">
+                          <div className="manage-label-row">
+                            <span className="manage-label">Ingredients</span>
+                            {!isPremium && <Lock size={12} className="lock-inline" />}
+                          </div>
+                          <span className="manage-desc">Track raw materials</span>
+                        </div>
+                        {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
+                      </div>
+
+                      <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('recipes')}>
+                        <div className="manage-icon recs"><Utensils size={22} /></div>
+                        <div className="manage-text">
+                          <div className="manage-label-row">
+                            <span className="manage-label">Recipes</span>
+                            {!isPremium && <Lock size={12} className="lock-inline" />}
+                          </div>
+                          <span className="manage-desc">HPP & Stock auto-deduct</span>
+                        </div>
+                        {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
+                      </div>
+
+                      <div className="manage-item" onClick={() => setManagementView('transactions')}>
+                        <div className="manage-icon trans"><History size={22} /></div>
+                        <div className="manage-text">
+                          <span className="manage-label">Transactions</span>
+                          <span className="manage-desc">Cancel & Detail sales</span>
+                        </div>
+                        <ChevronRight size={16} className="manage-arrow" />
+                      </div>
+
+                      <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('staff')}>
+                        <div className="manage-icon staff"><Users size={22} /></div>
+                        <div className="manage-text">
+                          <div className="manage-label-row">
+                            <span className="manage-label">Staff Management</span>
+                            {!isPremium && <Lock size={12} className="lock-inline" />}
+                          </div>
+                          <span className="manage-desc">{isPremium ? 'Manage team access' : 'Premium only'}</span>
+                        </div>
+                        {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mini-stats-grid">
+                    <div className="mini-stat-card">
+                      <div className="mini-card-icon prods"><ShoppingBag size={20} /></div>
+                      <div className="mini-card-content">
+                        <span className="mini-card-label">Total Products</span>
+                        <span className="mini-card-value">{products.length}</span>
+                      </div>
+                    </div>
+                    <div className="mini-stat-card">
+                      <div className="mini-card-icon ings"><Package size={20} /></div>
+                      <div className="mini-card-content">
+                        <span className="mini-card-label">Ingredients</span>
+                        <span className="mini-card-value">{categories.length}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="dashboard-content-grid">
-                    <div className="dashboard-card action-section manage-store-card">
-                      <div className="card-header-with-action">
-                        <h3 className="dashboard-card-title">Manage Store</h3>
-                        <span className="manage-badge">MANAGEMENT SYSTEM</span>
-                      </div>
-                      <div className="manage-grid">
-                        <div className="manage-item" onClick={() => setManagementView('products')}>
-                          <div className="manage-icon prods"><ShoppingBag size={22} /></div>
-                          <div className="manage-text">
-                            <span className="manage-label">Products</span>
-                            <span className="manage-desc">Add, Edit & Remove items</span>
-                          </div>
-                          <ChevronRight size={16} className="manage-arrow" />
-                        </div>
-                        
-                        <div className="manage-item" onClick={() => setManagementView('categories')}>
-                          <div className="manage-icon cats"><Tags size={22} /></div>
-                          <div className="manage-text">
-                            <span className="manage-label">Categories</span>
-                            <span className="manage-desc">Organize your menu</span>
-                          </div>
-                          <ChevronRight size={16} className="manage-arrow" />
-                        </div>
-
-                        <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('ingredients')}>
-                          <div className="manage-icon ings"><Package size={22} /></div>
-                          <div className="manage-text">
-                            <div className="manage-label-row">
-                              <span className="manage-label">Ingredients</span>
-                              {!isPremium && <Lock size={12} className="lock-inline" />}
-                            </div>
-                            <span className="manage-desc">Track raw materials</span>
-                          </div>
-                          {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
-                        </div>
-
-                        <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('recipes')}>
-                          <div className="manage-icon recs"><Utensils size={22} /></div>
-                          <div className="manage-text">
-                            <div className="manage-label-row">
-                              <span className="manage-label">Recipes</span>
-                              {!isPremium && <Lock size={12} className="lock-inline" />}
-                            </div>
-                            <span className="manage-desc">HPP & Stock auto-deduct</span>
-                          </div>
-                          {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
-                        </div>
-
-                        <div className="manage-item" onClick={() => setManagementView('transactions')}>
-                          <div className="manage-icon trans"><History size={22} /></div>
-                          <div className="manage-text">
-                            <span className="manage-label">Transactions</span>
-                            <span className="manage-desc">Cancel & Detail sales</span>
-                          </div>
-                          <ChevronRight size={16} className="manage-arrow" />
-                        </div>
-
-                        <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('staff')}>
-                          <div className="manage-icon staff"><Users size={22} /></div>
-                          <div className="manage-text">
-                            <div className="manage-label-row">
-                              <span className="manage-label">Staff Management</span>
-                              {!isPremium && <Lock size={12} className="lock-inline" />}
-                            </div>
-                            <span className="manage-desc">{isPremium ? 'Manage team access' : 'Premium only'}</span>
-                          </div>
-                          {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mini-stats-grid">
-                      <div className="mini-stat-card">
-                        <div className="mini-card-icon prods"><ShoppingBag size={20} /></div>
-                        <div className="mini-card-content">
-                          <span className="mini-card-label">Total Products</span>
-                          <span className="mini-card-value">{products.length}</span>
-                        </div>
-                      </div>
-                      <div className="mini-stat-card">
-                        <div className="mini-card-icon ings"><Package size={20} /></div>
-                        <div className="mini-card-content">
-                          <span className="mini-card-label">Ingredients</span>
-                          <span className="mini-card-value">{categories.length}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="dashboard-card transactions-card">
-                      <h3 className="dashboard-card-title">Recent Transactions</h3>
-                      <div className="dashboard-table-wrap">
-                        <table className="dashboard-table">
-                          <thead>
-                            <tr>
-                              <th>Time</th>
-                              <th>Payment</th>
-                              <th>Status</th>
-                              <th align="right">Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[...stats.listHeaders]
-                              .reverse()
-                              .slice(0, 10)
-                              .map((h: SaleHeaderDoc) => (
-                                <tr key={h.$id}>
-                                  <td>{new Date(tsOf(h)).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</td>
-                                  <td>{pmOf(h).toUpperCase()}</td>
-                                  <td>
-                                    <span className={`badge-${h.status || 'completed'}`}>
-                                      {(h.status || 'completed').toUpperCase()}
-                                    </span>
-                                  </td>
-                                  <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      </div>
+                  <div className="dashboard-card transactions-card">
+                    <h3 className="dashboard-card-title">Recent Transactions</h3>
+                    <div className="dashboard-table-wrap">
+                      <table className="dashboard-table">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th align="right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...stats.listHeaders]
+                            .reverse()
+                            .slice(0, 10)
+                            .map((h: SaleHeaderDoc) => (
+                              <tr key={h.$id}>
+                                <td>{new Date(tsOf(h)).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</td>
+                                <td>{pmOf(h).toUpperCase()}</td>
+                                <td>
+                                  <span className={`badge-${h.status || 'completed'}`}>
+                                    {(h.status || 'completed').toUpperCase()}
+                                  </span>
+                                </td>
+                                <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                </>
-              )}
+                </div>
+              </>
             </div>
           ) : (
             <div className="dashboard-premium-analytics">
@@ -1147,6 +1406,7 @@ export const DashboardPage = () => {
           )}
         </>
       )}
+
       {showModal && (
         <ManagementModal
           type={showModal}
@@ -1158,6 +1418,7 @@ export const DashboardPage = () => {
           loading={formLoading}
         />
       )}
+
       {selectedSale && (
         <SaleDetailModal
           sale={selectedSale}
@@ -1172,281 +1433,3 @@ export const DashboardPage = () => {
     </div>
   );
 };
-
-type ModalProps = {
-  type: string;
-  onClose: () => void;
-  onSave: (data: any) => Promise<void>;
-  initialData?: any;
-  categories: CategoryDoc[];
-  recipes: RecipeDoc[];
-  loading: boolean;
-};
-
-const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, recipes, loading }) => {
-  const [formData, setFormData] = useState<any>(initialData || {});
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    void onSave(formData);
-  };
-
-  return (
-    <div className="modal-overlay">
-      <div className="modal-card">
-        <header className="modal-header">
-          <h3>{initialData ? 'Edit' : 'Add New'} {type.slice(0, -1)}</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          {type === 'products' && (
-            <>
-              <div className="form-group">
-                <label>Product Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Special Croissant"
-                />
-              </div>
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  required
-                  value={formData.categoryId || ''}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((c) => (
-                    <option key={c.$id} value={c.$id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                {!formData.usesRecipe && (
-                  <div className="form-group">
-                    <label>HPP / Cost (Rp)</label>
-                    <input
-                      type="number"
-                      required={!formData.usesRecipe}
-                      value={formData.cost || ''}
-                      onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
-                      placeholder="8000"
-                    />
-                  </div>
-                )}
-                <div className="form-group">
-                  <label>Price (Rp)</label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.price || ''}
-                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                    placeholder="15000"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Product Image</label>
-                <div className="image-upload-zone" onClick={() => document.getElementById('prod-img-input')?.click()}>
-                  {formData.imageUrl ? (
-                    <img 
-                      src={formData.imageUrl.startsWith('http') ? formData.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${formData.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
-                      className="uploaded-preview" 
-                      alt="Preview" 
-                    />
-                  ) : (
-                    <div style={{ textAlign: 'center' }}>
-                      <Plus size={32} color="#94a3b8" />
-                      <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-                        Click to Upload Image
-                      </div>
-                    </div>
-                  )}
-                  <input 
-                    id="prod-img-input"
-                    type="file" 
-                    hidden
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const resp = await storage.createFile(bucketId, 'unique()', file);
-                        setFormData({ ...formData, imageUrl: resp.$id, imageFileId: resp.$id });
-                      } catch (err) {
-                        alert('Upload failed');
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <div className="switch-group">
-                  <div className="switch-label-wrap">
-                    <label style={{ margin: 0 }}>Use HPP (Recipes)</label>
-                    <span className="switch-subtext">Link to recipe for stock & cost tracking</span>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    checked={formData.usesRecipe || false}
-                    onChange={(e) => setFormData({ ...formData, usesRecipe: e.target.checked })}
-                    style={{ width: 'auto' }}
-                  />
-                </div>
-              </div>
-
-              {formData.usesRecipe && (
-                <div className="form-group" style={{ marginTop: '1rem' }}>
-                  <label>Link to Recipe</label>
-                  <select
-                    required={formData.usesRecipe}
-                    value={formData.recipeId || ''}
-                    onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
-                  >
-                    <option value="">Select Recipe</option>
-                    {recipes.map((r) => (
-                      <option key={r.$id} value={r.$id}>{r.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </>
-          )}
-
-          {type === 'categories' && (
-            <>
-              <div className="form-group">
-                <label>Category Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Pastry"
-                />
-              </div>
-              <div className="form-group">
-                <label>Brand Color</label>
-                <div className="color-input-wrap">
-                  <input
-                    type="color"
-                    value={formData.color || '#3d7066'}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  />
-                  <code>{formData.color || '#3d7066'}</code>
-                </div>
-              </div>
-            </>
-          )}
-
-          {(type === 'ingredients' || type === 'recipes') && (
-            <div className="modal-premium-notice">
-              <Lock size={32} />
-              <h4>Coming Soon to Web</h4>
-              <p>Advanced Ingredients & Recipe management is currently best handled via the mobile app. We are syncronizing these detailed forms for web.</p>
-            </div>
-          )}
-
-          <footer className="modal-footer">
-            <button type="button" className="app-btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
-            <button type="submit" className="app-btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </footer>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) {
-  const totalHpp = items.reduce((sum: number, it: any) => sum + itemCost(it), 0);
-  
-  return (
-    <div className="modal-overlay">
-      <div className="modal-card">
-        <header className="modal-header">
-          <h3>Sale Details</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <div className="modal-content" style={{ padding: '2rem' }}>
-          <div className="sale-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.5rem' }}>
-            <div>
-              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Transaction ID</label>
-              <div className="font-mono text-sm" style={{ color: '#64748b' }}>{sale.$id}</div>
-            </div>
-            <div>
-              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Date & Time</label>
-              <div style={{ fontWeight: 700, color: '#1e293b' }}>{new Date(tsOf(sale)).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</div>
-            </div>
-            <div>
-              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Status</label>
-              <span className={`badge-${sale.status || 'completed'}`} style={{ fontSize: '0.7rem' }}>
-                {(sale.status || 'completed').toUpperCase()}
-              </span>
-            </div>
-          </div>
-          
-          <div className="sale-items-list" style={{ marginTop: '2rem' }}>
-            <h4 style={{ marginBottom: '1rem', fontWeight: 800, color: '#1e293b' }}>Items Sold</h4>
-            <div className="items-scroll-box" style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '0 1rem' }}>
-              {items.map((it: any) => (
-                <div key={it.$id} className="sale-item-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {productsById[it.productId]?.imageUrl && (
-                      <img 
-                        src={productsById[it.productId].imageUrl.startsWith('http') ? productsById[it.productId].imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${productsById[it.productId].imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
-                        className="sale-item-thumb" 
-                        alt="" 
-                        style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }}
-                      />
-                    )}
-                    <div>
-                      <div className="font-bold" style={{ color: '#1e293b' }}>{productsById[it.productId]?.name || 'Unknown Item'}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                        {it.quantity} x Rp{(it.priceEach || it.price || 0).toLocaleString()}
-                        {itemCost(it) > 0 && <span style={{ marginLeft: '8px', color: '#94a3b8' }}>(Cost: Rp{itemCost(it).toLocaleString()})</span>}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="font-bold" style={{ color: '#1e293b' }}>Rp{itemRevenue(it).toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="sale-summary-card" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <span className="text-muted">Payment Method</span>
-              <span className="font-bold" style={{ color: '#1e293b' }}>{(sale.paymentMethod || 'cash').toUpperCase()}</span>
-            </div>
-            {totalHpp > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span className="text-muted">Total Cost (HPP)</span>
-                <span className="font-bold" style={{ color: '#ef4444' }}>Rp{totalHpp.toLocaleString()}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '2px dashed #cbd5e1' }}>
-              <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem' }}>Grand Total</span>
-              <span style={{ fontWeight: 900, color: PRIMARY, fontSize: '1.5rem' }}>Rp{(sale.total || 0).toLocaleString()}</span>
-            </div>
-          </div>
-
-          <footer className="modal-footer" style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-            {sale.status !== 'canceled' && (
-              <button className="app-btn-danger" onClick={() => { onCancel(sale.$id); onClose(); }} style={{ padding: '0.75rem 1.5rem' }}>
-                Cancel Sale
-              </button>
-            )}
-            <button className="app-btn-primary" onClick={onClose} style={{ padding: '0.75rem 2rem' }}>Close</button>
-          </footer>
-        </div>
-      </div>
-    </div>
-  );
-}
