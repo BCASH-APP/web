@@ -88,6 +88,7 @@ type ProductDoc = {
   name?: string; 
   categoryId?: string;
   price?: number;
+  cost?: number;
   imageUrl?: string;
   imageFileId?: string;
   usesRecipe?: boolean;
@@ -513,34 +514,88 @@ export const DashboardPage = () => {
   const storeName = organizationList.find((m) => m.organization.id === activeStoreId)?.organization.name || 'Store';
 
   return (
-    <div className="page-shell dashboard-page">
-      <div className="dashboard-header-row">
-        <div>
-          <h1 className="text-heading">Web Dashboard</h1>
-          <p className="text-subtitle">Manage your BCash POS data from anywhere.</p>
+    <div className="dashboard-app-shell">
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-logo">
+          <img src="/bcash-web/src/assets/appIcon/splash-icon-transparant.png" alt="Bcash" className="sidebar-logo-img" />
+          <span className="sidebar-brand">BCash POS</span>
         </div>
-        <div className="dashboard-org-pill">
-          <span className="org-label">Store</span>
-          <select
-            className="org-select"
-            value={activeStoreId}
-            onChange={(e) => setActiveStoreId(e.target.value)}
-          >
-            {organizationList.map((m) => (
-              <option key={m.organization.id} value={m.organization.id}>
-                {m.organization.name}
-              </option>
-            ))}
-          </select>
-          <a
-            href="dashingbakery://"
-            className="open-app-btn"
-            title="Open BCash App"
-          >
-            <Smartphone size={16} /> <span className="hide-mobile">Open App</span>
-          </a>
+        
+        <nav className="sidebar-nav">
+          <div className="nav-group">
+            <span className="nav-group-title">MAIN MENU</span>
+            <button className={`nav-item ${activeTab === 'home' && !managementView ? 'active' : ''}`} onClick={() => { setActiveTab('home'); setManagementView(null); }}>
+              <LayoutDashboard size={18} /> Home
+            </button>
+            {hasAnalyticsAccess && (
+              <button className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); setManagementView(null); }}>
+                <BarChart2 size={18} /> Analytics
+              </button>
+            )}
+          </div>
+
+          <div className="nav-group">
+            <span className="nav-group-title">MANAGE</span>
+            <button className={`nav-item ${managementView === 'products' ? 'active' : ''}`} onClick={() => setManagementView('products')}>
+              <ShoppingBag size={18} /> Products
+            </button>
+            <button className={`nav-item ${managementView === 'categories' ? 'active' : ''}`} onClick={() => setManagementView('categories')}>
+              <Tags size={18} /> Categories
+            </button>
+            <button className={`nav-item ${managementView === 'ingredients' ? 'active' : ''}`} onClick={() => setManagementView('ingredients')}>
+              <Package size={18} /> Ingredients
+            </button>
+            <button className={`nav-item ${managementView === 'recipes' ? 'active' : ''}`} onClick={() => setManagementView('recipes')}>
+              <Utensils size={18} /> Recipes
+            </button>
+            <button className={`nav-item ${managementView === 'transactions' ? 'active' : ''}`} onClick={() => setManagementView('transactions')}>
+              <History size={18} /> Transactions
+            </button>
+            {isPremium && (
+              <button className={`nav-item ${managementView === 'staff' ? 'active' : ''}`} onClick={() => setManagementView('staff')}>
+                <Users size={18} /> Staff
+              </button>
+            )}
+          </div>
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="user-pill">
+            <div className="user-avatar text-sm font-bold">{clerkUserId?.slice(0, 2).toUpperCase() || 'U'}</div>
+            <div className="user-info">
+              <span className="user-name">Manager</span>
+              <span className="user-plan badge-premium">{planId.toUpperCase()}</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </aside>
+
+      <main className="dashboard-main-area">
+        <header className="dashboard-topbar">
+          <div className="topbar-left">
+            <h1 className="topbar-title">
+              {managementView ? managementView.charAt(0).toUpperCase() + managementView.slice(1) : (activeTab === 'home' ? 'Dashboard Summary' : 'Analytics & Reports')}
+            </h1>
+          </div>
+          
+          <div className="topbar-right">
+            <div className="dashboard-org-pill">
+              <span className="org-label">Store</span>
+              <select className="org-select" value={activeStoreId} onChange={(e) => setActiveStoreId(e.target.value)}>
+                {organizationList.map((m) => (
+                  <option key={m.organization.id} value={m.organization.id}>
+                    {m.organization.name}
+                  </option>
+                ))}
+              </select>
+              <a href="dashingbakery://" className="open-app-btn" title="Open BCash App">
+                <Smartphone size={16} /> <span className="hide-mobile">Open App</span>
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <div className="dashboard-scrollable-content">
 
       {error && <div className="dashboard-error-banner" style={{ marginBottom: '1.5rem' }}><AlertCircle size={16} /> {error}</div>}
 
@@ -578,7 +633,7 @@ export const DashboardPage = () => {
                       <ArrowLeft size={18} /> <span className="hide-mobile">Back to Dashboard</span>
                     </button>
                     <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
-                    {managementView !== 'transactions' && managementView !== 'staff' && (
+                    {(managementView === 'products' || managementView === 'categories') && (
                       <button className="app-btn-primary add-item-btn" onClick={handleCreate} title={`Add ${managementView.slice(0, -1)}`}>
                         <Plus size={16} /> <span className="hide-mobile">Add {managementView.slice(0, -1)}</span>
                       </button>
@@ -597,6 +652,7 @@ export const DashboardPage = () => {
                               <tr>
                                 <th>Name</th>
                                 <th>Category</th>
+                                <th align="right">HPP</th>
                                 <th align="right">Price</th>
                                 <th align="right">Actions</th>
                               </tr>
@@ -624,6 +680,13 @@ export const DashboardPage = () => {
                                     </div>
                                   </td>
                                   <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
+                                  <td align="right" className="hpp-val-cell">
+                                    {p.usesRecipe ? (
+                                      <span className="hpp-hint" title="Configured via Recipe">Recipe Based</span>
+                                    ) : (
+                                      <span>Rp{(p.cost || 0).toLocaleString()}</span>
+                                    )}
+                                  </td>
                                   <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                   <td align="right">
                                     <div className="manage-row-actions">
@@ -759,9 +822,26 @@ export const DashboardPage = () => {
                       </div>
                     ) : (
                       <div className="management-empty-state">
-                        <Search size={32} className="empty-icon" />
-                        <p>Managing {managementView} is currently being synchronized...</p>
-                        <button className="app-btn-secondary" onClick={() => setManagementView(null)}>Go Back</button>
+                        {(managementView === 'ingredients' || managementView === 'recipes') ? (
+                          <>
+                            <Smartphone size={48} className="empty-icon-large" />
+                            <h3>Mobile Exclusive Feature</h3>
+                            <p>Managing {managementView} is currently only available through our mobile application. 
+                               Please use the BCash app to manage your stock, cost of goods, and recipes.</p>
+                            <div className="empty-actions">
+                              <a href="dashingbakery://" className="open-app-btn large">
+                                <Smartphone size={18} /> Open BCash App
+                              </a>
+                              <button className="app-btn-neutral" onClick={() => setManagementView(null)}>Back to Dashboard</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Search size={32} className="empty-icon" />
+                            <p>Managing {managementView} is currently being synchronized...</p>
+                            <button className="app-btn-secondary" onClick={() => setManagementView(null)}>Go Back</button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1087,6 +1167,8 @@ export const DashboardPage = () => {
           onCancel={handleCancelSale}
         />
       )}
+        </div>
+      </main>
     </div>
   );
 };
@@ -1129,20 +1211,32 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                   placeholder="e.g. Special Croissant"
                 />
               </div>
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  required
+                  value={formData.categoryId || ''}
+                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c.$id} value={c.$id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
               <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select
-                    required
-                    value={formData.categoryId || ''}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((c) => (
-                      <option key={c.$id} value={c.$id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {!formData.usesRecipe && (
+                  <div className="form-group">
+                    <label>HPP / Cost (Rp)</label>
+                    <input
+                      type="number"
+                      required={!formData.usesRecipe}
+                      value={formData.cost || ''}
+                      onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
+                      placeholder="8000"
+                    />
+                  </div>
+                )}
                 <div className="form-group">
                   <label>Price (Rp)</label>
                   <input
@@ -1271,6 +1365,8 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
 };
 
 function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) {
+  const totalHpp = items.reduce((sum: number, it: any) => sum + itemCost(it), 0);
+  
   return (
     <div className="modal-overlay">
       <div className="modal-card">
@@ -1279,59 +1375,75 @@ function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) 
           <button className="close-btn" onClick={onClose}><X size={20} /></button>
         </header>
         <div className="modal-content" style={{ padding: '2rem' }}>
-          <div className="sale-meta-grid">
+          <div className="sale-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.5rem' }}>
             <div>
-              <label className="text-muted">Transaction ID</label>
-              <div className="font-mono text-sm">{sale.$id}</div>
+              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Transaction ID</label>
+              <div className="font-mono text-sm" style={{ color: '#64748b' }}>{sale.$id}</div>
             </div>
             <div>
-              <label className="text-muted">Date & Time</label>
-              <div>{new Date(tsOf(sale)).toLocaleString()}</div>
+              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Date & Time</label>
+              <div style={{ fontWeight: 700, color: '#1e293b' }}>{new Date(tsOf(sale)).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</div>
+            </div>
+            <div>
+              <label className="text-muted" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Status</label>
+              <span className={`badge-${sale.status || 'completed'}`} style={{ fontSize: '0.7rem' }}>
+                {(sale.status || 'completed').toUpperCase()}
+              </span>
             </div>
           </div>
           
           <div className="sale-items-list" style={{ marginTop: '2rem' }}>
-            <h4 style={{ marginBottom: '1rem', fontWeight: 800 }}>Items Sold</h4>
-            <div className="items-scroll-box" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            <h4 style={{ marginBottom: '1rem', fontWeight: 800, color: '#1e293b' }}>Items Sold</h4>
+            <div className="items-scroll-box" style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '0 1rem' }}>
               {items.map((it: any) => (
-                <div key={it.$id} className="sale-item-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div key={it.$id} className="sale-item-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {productsById[it.productId]?.imageUrl && (
                       <img 
                         src={productsById[it.productId].imageUrl.startsWith('http') ? productsById[it.productId].imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${productsById[it.productId].imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
                         className="sale-item-thumb" 
                         alt="" 
+                        style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }}
                       />
                     )}
                     <div>
-                      <div className="font-bold">{productsById[it.productId]?.name || 'Unknown Item'}</div>
-                      <div className="text-sm text-muted">{it.quantity} x Rp{(it.priceEach || 0).toLocaleString()}</div>
+                      <div className="font-bold" style={{ color: '#1e293b' }}>{productsById[it.productId]?.name || 'Unknown Item'}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        {it.quantity} x Rp{(it.priceEach || it.price || 0).toLocaleString()}
+                        {itemCost(it) > 0 && <span style={{ marginLeft: '8px', color: '#94a3b8' }}>(Cost: Rp{itemCost(it).toLocaleString()})</span>}
+                      </div>
                     </div>
                   </div>
-                  <div className="font-bold">Rp{((it.quantity || 0) * (it.priceEach || 0)).toLocaleString()}</div>
+                  <div className="font-bold" style={{ color: '#1e293b' }}>Rp{itemRevenue(it).toLocaleString()}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="sale-summary-card" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div className="sale-summary-card" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
               <span className="text-muted">Payment Method</span>
-              <span className="font-bold">{(sale.paymentMethod || 'cash').toUpperCase()}</span>
+              <span className="font-bold" style={{ color: '#1e293b' }}>{(sale.paymentMethod || 'cash').toUpperCase()}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid #e2e8f0' }}>
-              <span style={{ fontWeight: 800 }}>Total Amount</span>
-              <span style={{ fontWeight: 800, color: PRIMARY, fontSize: '1.25rem' }}>Rp{(sale.total || 0).toLocaleString()}</span>
+            {totalHpp > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span className="text-muted">Total Cost (HPP)</span>
+                <span className="font-bold" style={{ color: '#ef4444' }}>Rp{totalHpp.toLocaleString()}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '2px dashed #cbd5e1' }}>
+              <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem' }}>Grand Total</span>
+              <span style={{ fontWeight: 900, color: PRIMARY, fontSize: '1.5rem' }}>Rp{(sale.total || 0).toLocaleString()}</span>
             </div>
           </div>
 
-          <footer className="modal-footer" style={{ marginTop: '2rem' }}>
+          <footer className="modal-footer" style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
             {sale.status !== 'canceled' && (
-              <button className="app-btn-danger" onClick={() => { onCancel(sale.$id); onClose(); }}>
+              <button className="app-btn-danger" onClick={() => { onCancel(sale.$id); onClose(); }} style={{ padding: '0.75rem 1.5rem' }}>
                 Cancel Sale
               </button>
             )}
-            <button className="app-btn-primary" onClick={onClose}>Close</button>
+            <button className="app-btn-primary" onClick={onClose} style={{ padding: '0.75rem 2rem' }}>Close</button>
           </footer>
         </div>
       </div>

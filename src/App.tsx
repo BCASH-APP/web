@@ -41,7 +41,7 @@ function App() {
       <header className="app-header">
         <div className="app-header-left">
           <Link to="/" className="app-logo-pill">
-            <img src={appIcon} alt="BCash POS icon" className="app-logo-image" />
+            <img src={appIcon || "./assets/appIcon/favicon.png"} alt="BCash POS icon" className="app-logo-image" />
             <span className="app-logo-text-main">BCash</span>
             <span className="app-logo-text-sub">POS</span>
           </Link>
