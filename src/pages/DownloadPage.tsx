@@ -15,8 +15,8 @@ import './pages.css';
 const APK_GITHUB_URL =
   'https://github.com/BCASH-APP/web/releases/latest/download/BCashPOS.apk';
 
-const APK_GITHUB_URL_DEBUG =
-  'https://github.com/BCASH-APP/web/releases/latest/download/app-debug.apk';
+// const APK_GITHUB_URL_DEBUG =
+//   'https://github.com/BCASH-APP/web/releases/latest/download/app-debug.apk';
 const FEATURES = [
   { icon: <Zap size={18} />, text: 'Point of Sale — fast, offline-capable cashier' },
   { icon: <Star size={18} />, text: 'Sales analytics — daily, weekly, monthly reports' },
@@ -39,10 +39,10 @@ export const DownloadPage = () => {
     window.open(APK_GITHUB_URL, '_blank', 'noopener,noreferrer');
   };
 
-  const handleDownloadDebug = () => {
-    setClicked(true);
-    window.open(APK_GITHUB_URL_DEBUG, '_blank', 'noopener,noreferrer');
-  };
+  // const handleDownloadDebug = () => {
+  //   setClicked(true);
+  //   window.open(APK_GITHUB_URL_DEBUG, '_blank', 'noopener,noreferrer');
+  // };
 
   return (
     <div className="page-shell download-page">
@@ -62,10 +62,10 @@ export const DownloadPage = () => {
           <Download size={20} />
           Download APK
         </button>
-        <button className="dl-btn-main" onClick={handleDownloadDebug} type="button">
+        {/* <button className="dl-btn-main" onClick={handleDownloadDebug} type="button">
           <Download size={20} />
           Download APK Debug
-        </button>
+        </button> */}
         <p className="dl-btn-hint">
           {clicked ? (
             <span className="dl-downloading">
