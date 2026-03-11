@@ -953,9 +953,9 @@ export const DashboardPage = () => {
             </h1>
             <div className="pro-search-bar hide-mobile">
               <Search size={18} color="#94a3b8" />
-              <input 
-                type="text" 
-                placeholder="Search name, ID, or more..." 
+              <input
+                type="text"
+                placeholder="Search name, ID, or more..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -964,7 +964,7 @@ export const DashboardPage = () => {
 
           <div className="pro-topbar-right">
             <a href="dashingbakery://" className="pro-store-pill" style={{ textDecoration: 'none' }} title="Open BCash App">
-              <Smartphone size={16} color="#2563eb" /> <span className="hide-mobile">Open App</span>
+              <Smartphone size={16} color="#3d7066" /> <span className="hide-mobile">Open App</span>
             </a>
             <div className="pro-store-pill">
               <span className="org-label" style={{ color: '#94a3b8' }}>Store</span>
@@ -1028,42 +1028,42 @@ export const DashboardPage = () => {
                             {products
                               .filter(p => !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.$id.includes(searchQuery))
                               .map(p => (
-                              <tr key={p.$id}>
-                                <td>
-                                  <div className="manage-item-cell">
-                                    {p.imageUrl ? (
-                                      <img
-                                        src={p.imageUrl.startsWith('http') ? p.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${p.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`}
-                                        alt=""
-                                        className="product-thumb-circle"
-                                      />
-                                    ) : (
-                                      <div className="product-thumb-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Package size={16} color="#cbd5e1" />
-                                      </div>
-                                    )}
-                                    <span className="manage-item-name">
-                                      {p.name || 'Unnamed Product'}
-                                      <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
-                                        {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
-                                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>HPP: Rp{(p.cost || 0).toLocaleString()}</span>
-                                      </div>
-                                    </span>
-                                  </div>
-                                </td>
-                                <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
-                                <td align="right" className="hpp-val-cell">
-                                  <span>Rp{(p.cost || 0).toLocaleString()}</span>
-                                </td>
-                                <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
-                                <td align="right">
-                                  <div className="manage-row-actions">
-                                    <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(p)}><Edit2 size={14} /></button>
-                                    <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(p.$id)}><Trash2 size={14} /></button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
+                                <tr key={p.$id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      {p.imageUrl ? (
+                                        <img
+                                          src={p.imageUrl.startsWith('http') ? p.imageUrl : `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${p.imageUrl}/preview?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`}
+                                          alt=""
+                                          className="product-thumb-circle"
+                                        />
+                                      ) : (
+                                        <div className="product-thumb-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                          <Package size={16} color="#cbd5e1" />
+                                        </div>
+                                      )}
+                                      <span className="manage-item-name">
+                                        {p.name || 'Unnamed Product'}
+                                        <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
+                                          {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
+                                          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>HPP: Rp{(p.cost || 0).toLocaleString()}</span>
+                                        </div>
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
+                                  <td align="right" className="hpp-val-cell">
+                                    <span>Rp{(p.cost || 0).toLocaleString()}</span>
+                                  </td>
+                                  <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(p)}><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(p.$id)}><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
@@ -1094,22 +1094,22 @@ export const DashboardPage = () => {
                             {categories
                               .filter(c => !searchQuery || c.name?.toLowerCase().includes(searchQuery.toLowerCase()))
                               .map(c => (
-                              <tr key={c.$id}>
-                                <td>
-                                  <div className="manage-item-cell">
-                                    <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
-                                    <span className="manage-item-name">{c.name || 'Unnamed'}</span>
-                                  </div>
-                                </td>
-                                <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
-                                <td align="right">
-                                  <div className="manage-row-actions">
-                                    <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
-                                    <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(c.$id)}><Trash2 size={14} /></button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
+                                <tr key={c.$id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
+                                      <span className="manage-item-name">{c.name || 'Unnamed'}</span>
+                                    </div>
+                                  </td>
+                                  <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(c.$id)}><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
@@ -1138,25 +1138,25 @@ export const DashboardPage = () => {
                               .reverse()
                               .filter(h => !searchQuery || h.$id.includes(searchQuery) || pmOf(h).includes(searchQuery.toLowerCase()) || h.status?.includes(searchQuery.toLowerCase()))
                               .map(h => (
-                              <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
-                                <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                                <td>
-                                  <span className={`badge-${h.status || 'completed'}`}>
-                                    {(h.status || 'completed').toUpperCase()}
-                                  </span>
-                                </td>
-                                <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
-                                <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
-                                <td align="right">
-                                  <div className="manage-row-actions">
-                                    <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
-                                    {h.status !== 'canceled' && (
-                                      <button className="icon-btn cancel-btn" title="Cancel Sale" onClick={() => handleCancelSale(h.$id)}><X size={14} /></button>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
+                                <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
+                                  <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                                  <td>
+                                    <span className={`badge-${h.status || 'completed'}`}>
+                                      {(h.status || 'completed').toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
+                                  <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
+                                      {h.status !== 'canceled' && (
+                                        <button className="icon-btn cancel-btn" title="Cancel Sale" onClick={() => handleCancelSale(h.$id)}><X size={14} /></button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
@@ -1203,7 +1203,7 @@ export const DashboardPage = () => {
                         </table>
                       </div>
                       <div style={{ padding: 24, textAlign: 'center' }}>
-                        <p style={{ fontSize: 13, color: '#64748b' }}>Please manage staff members and permissions via the <span style={{ color: '#2563eb', fontWeight: 700 }}>Mobile Application</span>.</p>
+                        <p style={{ fontSize: 13, color: '#64748b' }}>Please manage staff members and permissions via the <span style={{ color: '#3d7066', fontWeight: 700 }}>Mobile Application</span>.</p>
                       </div>
                     </>
                   ) : managementView === 'ingredients' ? (
@@ -1303,26 +1303,26 @@ export const DashboardPage = () => {
                           </thead>
                           <tbody>
                             {[...expenses]
-                              .sort((a,b) => tsOf(b as any) - tsOf(a as any))
+                              .sort((a, b) => tsOf(b as any) - tsOf(a as any))
                               .filter(exp => !searchQuery || exp.description?.toLowerCase().includes(searchQuery.toLowerCase()) || exp.$id.includes(searchQuery))
                               .map(exp => (
-                              <tr key={exp.$id}>
-                                <td>
-                                  <div className="manage-item-cell">
-                                    <Receipt size={16} color="#f59e0b" />
-                                    <span className="manage-item-name">{exp.description || 'Custom Expense'}</span>
-                                  </div>
-                                </td>
-                                <td>{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
-                                <td align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
-                                <td align="right">
-                                  <div className="manage-row-actions">
-                                    <button className="icon-btn edit-btn" onClick={() => handleEdit(exp)}><Edit2 size={14} /></button>
-                                    <button className="icon-btn delete-btn" onClick={() => handleDelete(exp.$id)}><Trash2 size={14} /></button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
+                                <tr key={exp.$id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      <Receipt size={16} color="#f59e0b" />
+                                      <span className="manage-item-name">{exp.description || 'Custom Expense'}</span>
+                                    </div>
+                                  </td>
+                                  <td>{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
+                                  <td align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
+                                  <td align="right">
+                                    <div className="manage-row-actions">
+                                      <button className="icon-btn edit-btn" onClick={() => handleEdit(exp)}><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" onClick={() => handleDelete(exp.$id)}><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
@@ -1346,7 +1346,7 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {[...stockAdjustments].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 100).map(st => {
+                            {[...stockAdjustments].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 100).map(st => {
                               const ingred = ingredients.find(i => i.$id === st.ingredientId);
                               const isPositive = st.deltaBase > 0;
                               return (
@@ -1462,41 +1462,41 @@ export const DashboardPage = () => {
                       </ResponsiveContainer>
                     </div>
 
-                     <div className="pro-card">
-                        <div className="pro-card-header">
-                          <h3 className="pro-card-title">Store Data</h3>
-                          <span style={{ fontSize: 12, color: '#94a3b8' }}>Business Snapshot</span>
+                    <div className="pro-card">
+                      <div className="pro-card-header">
+                        <h3 className="pro-card-title">Store Data</h3>
+                        <span style={{ fontSize: 12, color: '#94a3b8' }}>Business Snapshot</span>
+                      </div>
+                      <div className="store-data-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                          <Package size={18} color="var(--pro-primary)" />
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Products</div>
+                          <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{products.length}</div>
                         </div>
-                        <div className="store-data-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                            <Package size={18} color="var(--pro-primary)" />
-                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Products</div>
-                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{products.length}</div>
-                          </div>
-                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                            <Tags size={18} color="#facc15" />
-                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Categories</div>
-                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{categories.length}</div>
-                          </div>
-                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                            <ArrowLeftRight size={18} color="#10b981" />
-                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Sales</div>
-                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{stats.todaySalesCount}</div>
-                          </div>
-                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                            <Receipt size={18} color="#ef4444" />
-                            <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Expenses</div>
-                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#ef4444' }}>Rp{(stats.totalExpenses / 1000).toFixed(0)}k</div>
-                          </div>
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                          <Tags size={18} color="#facc15" />
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Categories</div>
+                          <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{categories.length}</div>
+                        </div>
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                          <ArrowLeftRight size={18} color="#10b981" />
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Sales</div>
+                          <div style={{ fontSize: '18px', fontWeight: 900, color: '#1e293b' }}>{stats.todaySalesCount}</div>
+                        </div>
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                          <Receipt size={18} color="#ef4444" />
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>Expenses</div>
+                          <div style={{ fontSize: '18px', fontWeight: 900, color: '#ef4444' }}>Rp{(stats.totalExpenses / 1000).toFixed(0)}k</div>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="pro-home-right">
+                  <div className="pro-home-right">
                     <div className="pro-card">
                       <div className="pro-card-header">
                         <h3 className="pro-card-title">Recent TX</h3>
-                        <span style={{ fontSize: 12, color: '#3b82f6', cursor: 'pointer', fontWeight: 600 }} onClick={() => setManagementView('transactions')}>View all</span>
+                        <span style={{ fontSize: 12, color: '#3d7066', cursor: 'pointer', fontWeight: 600 }} onClick={() => setManagementView('transactions')}>View all</span>
                       </div>
                       <div className="pro-message-list">
                         {[...stats.listHeaders].reverse().slice(0, 5).map((h: SaleHeaderDoc) => (
@@ -1679,9 +1679,9 @@ export const DashboardPage = () => {
                         {stats.bestSelling.slice(0, 8).map((p, idx) => (
                           <div key={p.id} className="prod-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div className="prod-rank" style={{ 
-                                width: '32px', height: '32px', borderRadius: '50%', 
-                                background: idx === 0 ? 'linear-gradient(135deg, #10b981, #059669)' : idx === 1 ? 'linear-gradient(135deg, #facc15, #ca8a04)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#e2e8f0', 
+                              <div className="prod-rank" style={{
+                                width: '32px', height: '32px', borderRadius: '50%',
+                                background: idx === 0 ? 'linear-gradient(135deg, #10b981, #059669)' : idx === 1 ? 'linear-gradient(135deg, #facc15, #ca8a04)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#e2e8f0',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 900, color: idx < 3 ? 'white' : '#475569',
                                 boxShadow: idx < 3 ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none'
                               }}>{idx + 1}</div>
