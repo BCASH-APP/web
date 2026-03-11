@@ -1959,3 +1959,202 @@
   opacity: 0.2;
 }
 
+/* Management Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: modalScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalScale {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.modal-form {
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 1rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #3d7066;
+  box-shadow: 0 0 0 4px rgba(61, 112, 102, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.color-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.color-input-wrap input[type="color"] {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+
+.modal-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.modal-premium-notice {
+  padding: 2rem;
+  text-align: center;
+  background-color: #f8fafc;
+  border-radius: 16px;
+  border: 2px dashed #e2e8f0;
+  color: #3d7066;
+  margin-bottom: 1.5rem;
+}
+
+.modal-premium-notice h4 {
+  margin: 1rem 0 0.5rem;
+  font-weight: 800;
+}
+
+.modal-premium-notice p {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Staff Specifics */
+.staff-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.role-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.status-online {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #22c55e;
+}
+
+.staff-help {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.staff-help a {
+  color: #3d7066;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Inline Locking for Management Grid */
+.lock-inline {
+  color: #94a3b8;
+}
+
+.manage-item.locked {
+  background-color: rgba(248, 250, 252, 0.8);
+  border-style: dashed;
+}
+
+.manage-item.locked:hover {
+  transform: none;
+  cursor: default;
+}
+
+.manage-lock {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: #cbd5e1;
+}
+

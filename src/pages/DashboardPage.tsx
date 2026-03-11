@@ -42,8 +42,10 @@ import {
   productsCollectionId,
   saleItemsCollectionId,
   salesCollectionId,
+  ingredientsCollectionId,
+  recipesCollectionId,
 } from '../lib/appwrite';
-import { list, tenantQueries } from '../lib/repo';
+import { create, list, remove, tenantQueries, update } from '../lib/repo';
 import { useUserData } from '../lib/useUserData';
 
 const PRIMARY = '#3d7066';
@@ -85,6 +87,21 @@ type ProductDoc = {
 };
 type CategoryDoc = { $id: string; name?: string; color?: string };
 type ExpenseDoc = { $id: string; amount?: number; timestamp?: string; $createdAt?: string };
+type IngredientDoc = { 
+  $id: string; 
+  name?: string; 
+  unitType?: string; 
+  baseUnit?: string; 
+  costPerUnit?: number; 
+  stockQtyBase?: number;
+  minStockThreshold?: number;
+};
+type RecipeDoc = { 
+  $id: string; 
+  name?: string; 
+  yield?: number; 
+  overheadPercent?: number;
+};
 
 function tsOf(doc: { timestamp?: string; $createdAt: string }) {
   return new Date(doc.timestamp || doc.$createdAt).getTime();
@@ -112,7 +129,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 };
 
 export const DashboardPage = () => {
-  const { planId, clerkUserId } = useUserData();
+  const { planId, isPremium, clerkUserId } = useUserData();
   const { userMemberships, isLoaded: orgsLoaded } = useOrganizationList({ userMemberships: true });
   const organizationList = userMemberships?.data ?? [];
   const [activeStoreId, setActiveStoreId] = useState<string | undefined>(undefined);
@@ -135,8 +152,91 @@ export const DashboardPage = () => {
   const [products, setProducts] = useState<ProductDoc[]>([]);
   const [categories, setCategories] = useState<CategoryDoc[]>([]);
   const [expenses, setExpenses] = useState<ExpenseDoc[]>([]);
+  const [ingredients, setIngredients] = useState<IngredientDoc[]>([]);
+  const [recipes, setRecipes] = useState<RecipeDoc[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal / Form States
+  const [showModal, setShowModal] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formLoading, setFormLoading] = useState(false);
+
+  const handleCreate = () => {
+    setEditingItem(null);
+    setShowModal(managementView);
+  };
+
+  const handleEdit = (item: any) => {
+    setEditingItem(item);
+    setShowModal(managementView);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!managementView || !confirm('Are you sure you want to delete this item?')) return;
+    let colId = '';
+    if (managementView === 'products') colId = productsCollectionId;
+    else if (managementView === 'categories') colId = categoriesCollectionId;
+    else if (managementView === 'ingredients') colId = ingredientsCollectionId;
+    else if (managementView === 'recipes') colId = recipesCollectionId;
+
+    if (!colId) return;
+    try {
+      await remove(colId, id);
+      // Refresh local state
+      if (managementView === 'products') setProducts(products.filter(p => p.$id !== id));
+      else if (managementView === 'categories') setCategories(categories.filter(c => c.$id !== id));
+      else if (managementView === 'ingredients') setIngredients(ingredients.filter(i => i.$id !== id));
+      else if (managementView === 'recipes') setRecipes(recipes.filter(r => r.$id !== id));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Delete failed');
+    }
+  };
+
+  const handleSave = async (data: any) => {
+    if (!managementView) return;
+    setFormLoading(true);
+    let colId = '';
+    if (managementView === 'products') colId = productsCollectionId;
+    else if (managementView === 'categories') colId = categoriesCollectionId;
+    else if (managementView === 'ingredients') colId = ingredientsCollectionId;
+    else if (managementView === 'recipes') colId = recipesCollectionId;
+
+    if (!colId) return;
+    try {
+      const payload = { ...data, clerkUserId, orgId: activeStoreId || null };
+      if (editingItem) {
+        const updated = await update<any>(colId, editingItem.$id, payload);
+        if (managementView === 'products') setProducts(products.map(p => p.$id === updated.$id ? updated : p));
+        else if (managementView === 'categories') setCategories(categories.map(c => c.$id === updated.$id ? updated : c));
+        else if (managementView === 'ingredients') setIngredients(ingredients.map(i => i.$id === updated.$id ? updated : i));
+        else if (managementView === 'recipes') setRecipes(recipes.map(r => r.$id === updated.$id ? updated : r));
+      } else {
+        const created = await create<any>(colId, payload);
+        if (managementView === 'products') setProducts([...products, created]);
+        else if (managementView === 'categories') setCategories([...categories, created]);
+        else if (managementView === 'ingredients') setIngredients([...ingredients, created]);
+        else if (managementView === 'recipes') setRecipes([...recipes, created]);
+      }
+      setShowModal(null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const [selectedSale, setSelectedSale] = useState<SaleHeaderDoc | null>(null);
+
+  const handleCancelSale = async (id: string) => {
+    if (!confirm('Are you sure you want to cancel this sale? This action is permanent.')) return;
+    try {
+      await update(salesCollectionId, id, { status: 'canceled' });
+      setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled' } : h));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Cancel failed');
+    }
+  };
 
   useEffect(() => {
     if (orgsLoaded && organizationList.length > 0 && activeStoreId === undefined) {
@@ -157,7 +257,7 @@ export const DashboardPage = () => {
       const tenant = tenantQueries(clerkUserId, activeStoreId);
 
       try {
-        const [headers, items, prods, cats, exps] = await Promise.all([
+        const [headers, items, prods, cats, exps, ings, recs] = await Promise.all([
           list<SaleHeaderDoc>(salesCollectionId, [
             Query.greaterThanEqual('timestamp', new Date(startTs).toISOString()),
             Query.lessThanEqual('timestamp', new Date(endTs).toISOString()),
@@ -167,12 +267,16 @@ export const DashboardPage = () => {
           list<ProductDoc>(productsCollectionId, [...tenant]),
           list<CategoryDoc>(categoriesCollectionId, [...tenant]),
           list<ExpenseDoc>(expensesCollectionId, [...tenant]),
+          isPremium ? list<IngredientDoc>(ingredientsCollectionId, [...tenant]) : Promise.resolve([]),
+          isPremium ? list<RecipeDoc>(recipesCollectionId, [...tenant]) : Promise.resolve([]),
         ]);
         setSaleHeaders(headers);
         setSaleItems(items);
         setProducts(prods);
         setCategories(cats);
         setExpenses(exps);
+        setIngredients(ings);
+        setRecipes(recs);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load data');
       } finally {
@@ -419,7 +523,7 @@ export const DashboardPage = () => {
                       <ArrowLeft size={18} /> Back to Dashboard
                     </button>
                     <h2 className="management-view-title">{managementView.charAt(0).toUpperCase() + managementView.slice(1)}</h2>
-                    <button className="app-btn-primary add-item-btn">
+                    <button className="app-btn-primary add-item-btn" onClick={handleCreate}>
                       <Plus size={16} /> Add {managementView.slice(0, -1)}
                     </button>
                   </header>
@@ -452,8 +556,8 @@ export const DashboardPage = () => {
                                   <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                   <td align="right">
                                     <div className="manage-row-actions">
-                                      <button className="icon-btn edit-btn" title="Edit"><Edit2 size={14} /></button>
-                                      <button className="icon-btn delete-btn" title="Delete"><Trash2 size={14} /></button>
+                                      <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(p)}><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(p.$id)}><Trash2 size={14} /></button>
                                     </div>
                                   </td>
                                 </tr>
@@ -488,8 +592,8 @@ export const DashboardPage = () => {
                                   <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
                                   <td align="right">
                                     <div className="manage-row-actions">
-                                      <button className="icon-btn edit-btn" title="Edit"><Edit2 size={14} /></button>
-                                      <button className="icon-btn delete-btn" title="Delete"><Trash2 size={14} /></button>
+                                      <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
+                                      <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(c.$id)}><Trash2 size={14} /></button>
                                     </div>
                                   </td>
                                 </tr>
@@ -528,9 +632,9 @@ export const DashboardPage = () => {
                                   <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
                                   <td align="right">
                                     <div className="manage-row-actions">
-                                      <button className="icon-btn view-btn" title="Details"><ChevronRight size={14} /></button>
+                                      <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
                                       {h.status !== 'canceled' && (
-                                        <button className="icon-btn cancel-btn" title="Cancel Sale"><X size={14} /></button>
+                                        <button className="icon-btn cancel-btn" title="Cancel Sale" onClick={() => handleCancelSale(h.$id)}><X size={14} /></button>
                                       )}
                                     </div>
                                   </td>
@@ -538,6 +642,48 @@ export const DashboardPage = () => {
                               ))}
                             </tbody>
                           </table>
+                        </div>
+                      </div>
+                    ) : managementView === 'staff' ? (
+                      <div className="manage-list-items">
+                        <div className="manage-list-info">
+                          <span>Active Team Members</span>
+                        </div>
+                        <div className="dashboard-table-wrap">
+                          <table className="dashboard-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th align="right">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {organizationList.map(m => (
+                                <tr key={m.id}>
+                                  <td>
+                                    <div className="manage-item-cell">
+                                      {m.publicUserData?.imageUrl && (
+                                        <img src={m.publicUserData.imageUrl} alt="" className="staff-avatar" />
+                                      )}
+                                      <span className="manage-item-name">{m.publicUserData?.firstName} {m.publicUserData?.lastName}</span>
+                                    </div>
+                                  </td>
+                                  <td>{m.publicUserData?.identifier}</td>
+                                  <td>
+                                    <span className="role-badge">{(m.role || 'member').toUpperCase()}</span>
+                                  </td>
+                                  <td align="right">
+                                    <span className="status-online">ACTIVE</span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="manage-list-footer">
+                          <p className="staff-help">To add or remove staff, please use the <a href="https://clerk.com" target="_blank" rel="noopener noreferrer">Clerk Organization Dashboard</a></p>
                         </div>
                       </div>
                     ) : (
@@ -596,22 +742,28 @@ export const DashboardPage = () => {
                           <ChevronRight size={16} className="manage-arrow" />
                         </div>
 
-                        <div className="manage-item" onClick={() => setManagementView('ingredients')}>
+                        <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('ingredients')}>
                           <div className="manage-icon ings"><Package size={22} /></div>
                           <div className="manage-text">
-                            <span className="manage-label">Ingredients</span>
+                            <div className="manage-label-row">
+                              <span className="manage-label">Ingredients</span>
+                              {!isPremium && <Lock size={12} className="lock-inline" />}
+                            </div>
                             <span className="manage-desc">Track raw materials</span>
                           </div>
-                          <ChevronRight size={16} className="manage-arrow" />
+                          {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
                         </div>
 
-                        <div className="manage-item" onClick={() => setManagementView('recipes')}>
+                        <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('recipes')}>
                           <div className="manage-icon recs"><Utensils size={22} /></div>
                           <div className="manage-text">
-                            <span className="manage-label">Recipes</span>
+                            <div className="manage-label-row">
+                              <span className="manage-label">Recipes</span>
+                              {!isPremium && <Lock size={12} className="lock-inline" />}
+                            </div>
                             <span className="manage-desc">HPP & Stock auto-deduct</span>
                           </div>
-                          <ChevronRight size={16} className="manage-arrow" />
+                          {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
                         </div>
 
                         <div className="manage-item" onClick={() => setManagementView('transactions')}>
@@ -623,13 +775,16 @@ export const DashboardPage = () => {
                           <ChevronRight size={16} className="manage-arrow" />
                         </div>
 
-                        <div className="manage-item disabled">
+                        <div className={`manage-item ${!isPremium ? 'disabled locked' : ''}`} onClick={() => isPremium && setManagementView('staff')}>
                           <div className="manage-icon staff"><Users size={22} /></div>
                           <div className="manage-text">
-                            <span className="manage-label">Staff Management</span>
-                            <span className="manage-desc">Coming soon</span>
+                            <div className="manage-label-row">
+                              <span className="manage-label">Staff Management</span>
+                              {!isPremium && <Lock size={12} className="lock-inline" />}
+                            </div>
+                            <span className="manage-desc">{isPremium ? 'Manage team access' : 'Premium only'}</span>
                           </div>
-                          <Lock size={14} className="manage-lock" />
+                          {isPremium ? <ChevronRight size={16} className="manage-arrow" /> : null}
                         </div>
                       </div>
                     </div>
@@ -841,6 +996,196 @@ export const DashboardPage = () => {
           )}
         </>
       )}
+      {showModal && (
+        <ManagementModal
+          type={showModal}
+          onClose={() => setShowModal(null)}
+          onSave={handleSave}
+          initialData={editingItem}
+          categories={categories}
+          loading={formLoading}
+        />
+      )}
+      {selectedSale && (
+        <SaleDetailModal
+          sale={selectedSale}
+          items={saleItems.filter(it => it.saleId === selectedSale.$id)}
+          productsById={productsById}
+          onClose={() => setSelectedSale(null)}
+          onCancel={handleCancelSale}
+        />
+      )}
     </div>
   );
 };
+
+type ModalProps = {
+  type: string;
+  onClose: () => void;
+  onSave: (data: any) => Promise<void>;
+  initialData?: any;
+  categories: CategoryDoc[];
+  loading: boolean;
+};
+
+const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialData, categories, loading }) => {
+  const [formData, setFormData] = useState<any>(initialData || {});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void onSave(formData);
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <header className="modal-header">
+          <h3>{initialData ? 'Edit' : 'Add New'} {type.slice(0, -1)}</h3>
+          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+        </header>
+        <form onSubmit={handleSubmit} className="modal-form">
+          {type === 'products' && (
+            <>
+              <div className="form-group">
+                <label>Product Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Special Croissant"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Category</label>
+                  <select
+                    required
+                    value={formData.categoryId || ''}
+                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((c) => (
+                      <option key={c.$id} value={c.$id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Price (Rp)</label>
+                  <input
+                    type="number"
+                    required
+                    value={formData.price || ''}
+                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                    placeholder="15000"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {type === 'categories' && (
+            <>
+              <div className="form-group">
+                <label>Category Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Pastry"
+                />
+              </div>
+              <div className="form-group">
+                <label>Brand Color</label>
+                <div className="color-input-wrap">
+                  <input
+                    type="color"
+                    value={formData.color || '#3d7066'}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  />
+                  <code>{formData.color || '#3d7066'}</code>
+                </div>
+              </div>
+            </>
+          )}
+
+          {(type === 'ingredients' || type === 'recipes') && (
+            <div className="modal-premium-notice">
+              <Lock size={32} />
+              <h4>Coming Soon to Web</h4>
+              <p>Advanced Ingredients & Recipe management is currently best handled via the mobile app. We are syncronizing these detailed forms for web.</p>
+            </div>
+          )}
+
+          <footer className="modal-footer">
+            <button type="button" className="app-btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" className="app-btn-primary" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+function SaleDetailModal({ sale, items, productsById, onClose, onCancel }: any) {
+  return (
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <header className="modal-header">
+          <h3>Sale Details</h3>
+          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+        </header>
+        <div className="modal-content" style={{ padding: '2rem' }}>
+          <div className="sale-meta-grid">
+            <div>
+              <label className="text-muted">Transaction ID</label>
+              <div className="font-mono text-sm">{sale.$id}</div>
+            </div>
+            <div>
+              <label className="text-muted">Date & Time</label>
+              <div>{new Date(tsOf(sale)).toLocaleString()}</div>
+            </div>
+          </div>
+          
+          <div className="sale-items-list" style={{ marginTop: '2rem' }}>
+            <h4 style={{ marginBottom: '1rem', fontWeight: 800 }}>Items Sold</h4>
+            <div className="items-scroll-box" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+              {items.map((it: any) => (
+                <div key={it.$id} className="sale-item-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <div>
+                    <div className="font-bold">{productsById[it.productId]?.name || 'Unknown Item'}</div>
+                    <div className="text-sm text-muted">{it.quantity} x Rp{(it.priceEach || 0).toLocaleString()}</div>
+                  </div>
+                  <div className="font-bold">Rp{((it.quantity || 0) * (it.priceEach || 0)).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="sale-summary-card" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span className="text-muted">Payment Method</span>
+              <span className="font-bold">{(sale.paymentMethod || 'cash').toUpperCase()}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid #e2e8f0' }}>
+              <span style={{ fontWeight: 800 }}>Total Amount</span>
+              <span style={{ fontWeight: 800, color: PRIMARY, fontSize: '1.25rem' }}>Rp{(sale.total || 0).toLocaleString()}</span>
+            </div>
+          </div>
+
+          <footer className="modal-footer" style={{ marginTop: '2rem' }}>
+            {sale.status !== 'canceled' && (
+              <button className="app-btn-danger" onClick={() => { onCancel(sale.$id); onClose(); }}>
+                Cancel Sale
+              </button>
+            )}
+            <button className="app-btn-primary" onClick={onClose}>Close</button>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
