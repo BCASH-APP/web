@@ -35,7 +35,6 @@ import {
   X,
   Smartphone,
   Banknote,
-  CreditCard,
   QrCode,
   ArrowLeftRight,
 } from 'lucide-react';
