@@ -47,6 +47,8 @@ import {
   recipesCollectionId,
   bucketId,
   storage,
+  appwriteClient,
+  databaseId,
 } from '../lib/appwrite';
 import { create, list, remove, tenantQueries, update } from '../lib/repo';
 import { useUserData } from '../lib/useUserData';
@@ -87,7 +89,8 @@ type ProductDoc = {
   categoryId?: string;
   price?: number;
   imageUrl?: string;
-  useHpp?: boolean;
+  imageFileId?: string;
+  usesRecipe?: boolean;
   recipeId?: string;
   categoryName?: string;
 };
@@ -291,6 +294,45 @@ export const DashboardPage = () => {
     }
     void load();
   }, [activeStoreId, canQuery, rangeEnd, rangeStart, clerkUserId]);
+
+  useEffect(() => {
+    if (!canQuery || !activeStoreId) return;
+
+    const unsubscribe = appwriteClient.subscribe(
+      [`databases.${databaseId}.collections.*.documents`],
+      (response) => {
+        const doc = response.payload as any;
+        const isOurData = doc.orgId === activeStoreId || (!doc.orgId && doc.clerkUserId === clerkUserId);
+        if (!isOurData) return;
+
+        const collectionId = response.events[0].split('.')[3];
+        const eventType = response.events[0].split('.').pop();
+
+        const handler = (prev: any[]) => {
+          if (eventType === 'create') {
+            return prev.some(d => d.$id === doc.$id) ? prev : [...prev, doc];
+          }
+          if (eventType === 'update') {
+            return prev.map(d => d.$id === doc.$id ? doc : d);
+          }
+          if (eventType === 'delete') {
+            return prev.filter(d => d.$id !== doc.$id);
+          }
+          return prev;
+        };
+
+        if (collectionId === productsCollectionId) setProducts(handler);
+        else if (collectionId === categoriesCollectionId) setCategories(handler);
+        else if (collectionId === ingredientsCollectionId) setIngredients(handler);
+        else if (collectionId === recipesCollectionId) setRecipes(handler);
+        else if (collectionId === salesCollectionId) setSaleHeaders(handler);
+        else if (collectionId === saleItemsCollectionId) setSaleItems(handler);
+        else if (collectionId === expensesCollectionId) setExpenses(handler);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [canQuery, activeStoreId, clerkUserId]);
 
   const productsById = useMemo(() => {
     const m: Record<string, ProductDoc> = {};
@@ -577,7 +619,7 @@ export const DashboardPage = () => {
                                       )}
                                       <span className="manage-item-name">
                                         {p.name || 'Unnamed Product'}
-                                        {p.useHpp && <span className="hpp-badge">HPP</span>}
+                                        {p.usesRecipe && <span className="hpp-badge">HPP</span>}
                                       </span>
                                     </div>
                                   </td>
@@ -1140,7 +1182,7 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                       if (!file) return;
                       try {
                         const resp = await storage.createFile(bucketId, 'unique()', file);
-                        setFormData({ ...formData, imageUrl: resp.$id });
+                        setFormData({ ...formData, imageUrl: resp.$id, imageFileId: resp.$id });
                       } catch (err) {
                         alert('Upload failed');
                       }
@@ -1157,18 +1199,18 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                   </div>
                   <input 
                     type="checkbox" 
-                    checked={formData.useHpp || false}
-                    onChange={(e) => setFormData({ ...formData, useHpp: e.target.checked })}
+                    checked={formData.usesRecipe || false}
+                    onChange={(e) => setFormData({ ...formData, usesRecipe: e.target.checked })}
                     style={{ width: 'auto' }}
                   />
                 </div>
               </div>
 
-              {formData.useHpp && (
+              {formData.usesRecipe && (
                 <div className="form-group" style={{ marginTop: '1rem' }}>
                   <label>Link to Recipe</label>
                   <select
-                    required={formData.useHpp}
+                    required={formData.usesRecipe}
                     value={formData.recipeId || ''}
                     onChange={(e) => setFormData({ ...formData, recipeId: e.target.value })}
                   >
