@@ -37,6 +37,7 @@ import {
   Banknote,
   QrCode,
   ArrowLeftRight,
+  Activity,
 } from 'lucide-react';
 import logoIcon from '../assets/appIcon/splash-icon-transparant.png';
 import './pages.css';
@@ -437,7 +438,7 @@ export const DashboardPage = () => {
 
   const hasAnalyticsAccess = planId === 'premium';
 
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const statusFilter = 'all';
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [rangeStart, setRangeStart] = useState<string>(() => {
     const d = new Date();
@@ -669,7 +670,12 @@ export const DashboardPage = () => {
     const paymentBreakdown: Record<string, number> = {};
     const hourlyBreakdown: Record<number, number> = {};
 
-    completedOnly.forEach((h) => {
+    let filteredForStats = completedOnly;
+    if (paymentFilter !== 'all') {
+      filteredForStats = completedOnly.filter(h => pmOf(h) === paymentFilter);
+    }
+
+    filteredForStats.forEach((h) => {
       const ts = tsOf(h);
       const val = totalOf(h);
       revenue += val;
@@ -713,7 +719,7 @@ export const DashboardPage = () => {
     const grossProfit = revenue - cost;
     const netProfit = grossProfit - periodExpenses;
     const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
-    const avgTicket = completedOnly.length > 0 ? revenue / completedOnly.length : 0;
+    const avgTicket = filteredForStats.length > 0 ? revenue / filteredForStats.length : 0;
     const canceledCount = inRange.filter((h) => h.status === 'canceled').length;
 
     const bestSelling = Object.entries(productSales)
@@ -755,11 +761,6 @@ export const DashboardPage = () => {
       }))
       .sort((a, b) => b.value - a.value);
 
-    let listHeaders = inRange;
-    if (statusFilter === 'completed') listHeaders = completedOnly;
-    else if (statusFilter === 'canceled')
-      listHeaders = inRange.filter((h) => h.status === 'canceled');
-    if (paymentFilter !== 'all') listHeaders = listHeaders.filter((h) => pmOf(h) === paymentFilter);
 
     return {
       revenue,
@@ -770,7 +771,7 @@ export const DashboardPage = () => {
       totalExpenses: periodExpenses,
       netProfit,
       margin,
-      transactionCount: completedOnly.length,
+      transactionCount: filteredForStats.length,
       canceledCount,
       itemsSold,
       avgTicket,
@@ -780,7 +781,7 @@ export const DashboardPage = () => {
       hourlyData,
       topHours,
       paymentData,
-      listHeaders,
+      listHeaders: paymentFilter === 'all' ? inRange : inRange.filter(h => pmOf(h) === paymentFilter),
     };
   }, [
     rangeStart,
@@ -1132,29 +1133,64 @@ export const DashboardPage = () => {
               ) : activeTab === 'home' ? (
                 <div className="pro-home-grid">
                   <div className="pro-home-left">
-                    <div className="pro-hero-card">
-                      <div className="pro-hero-content">
-                        <h2>Welcome to the best<br />management experience.</h2>
-                        <p>Track everything from products to detailed analytics in real-time. {storeName} makes it easy.</p>
-                        <button className="pro-hero-btn" onClick={() => setManagementView('products')}>Manage Products</button>
+                    <div className="pro-card" style={{ background: 'var(--pro-primary)', color: 'white', borderRadius: '32px', padding: '32px', marginBottom: '24px', position: 'relative', overflow: 'hidden', minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ position: 'absolute', top: '-60px', left: '-20px', width: '240px', height: '240px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+                      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span style={{ fontSize: '14px', fontWeight: 600, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '1px' }}>TODAY REVENUE</span>
+                          <h2 style={{ fontSize: '42px', fontWeight: 900, margin: '8px 0 0 0' }}>Rp{stats.todayRevenue.toLocaleString()}</h2>
+                        </div>
+                        <span style={{ fontSize: '14px', fontWeight: 600, opacity: 0.8 }}>{storeName}</span>
                       </div>
-                      <div className="pro-hero-decor">
-                        <Smartphone size={80} color="rgba(255,255,255,0.4)" strokeWidth={1} />
+
+                      <div style={{ position: 'relative', display: 'flex', gap: '32px', background: 'rgba(0,0,0,0.15)', padding: '20px', borderRadius: '24px', marginTop: '20px' }}>
+                        <div>
+                          <span style={{ fontSize: '11px', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Transactions</span>
+                          <span style={{ fontSize: '20px', fontWeight: 800 }}>{stats.todaySalesCount}</span>
+                        </div>
+                        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                        <div>
+                          <span style={{ fontSize: '11px', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Total Period</span>
+                          <span style={{ fontSize: '20px', fontWeight: 800 }}>Rp{(stats.revenue / 1000).toFixed(0)}k</span>
+                        </div>
                       </div>
                     </div>
 
                     <div className="pro-card">
                       <div className="pro-card-header">
-                        <h3 className="pro-card-title">Total Revenue</h3>
-                        <span style={{ fontSize: 13, color: '#64748b' }}>Today: Rp{(stats.todayRevenue / 1000).toFixed(0)}k</span>
+                        <h3 className="pro-card-title">Revenue Trend</h3>
+                        <span style={{ fontSize: 13, color: '#64748b' }}>Sales Performance</span>
                       </div>
                       <ResponsiveContainer width="100%" height={260}>
                         <AreaChart data={stats.chartData || []}>
                           <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} />
                           <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
                           <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Revenue']} />
-                          <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#eff6ff" strokeWidth={3} />
+                          <Area type="monotone" dataKey="value" stroke="var(--pro-primary)" fill="rgba(61, 112, 102, 0.05)" strokeWidth={3} />
                         </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="pro-card" style={{ marginBottom: '24px' }}>
+                      <div className="pro-card-header">
+                        <h3 className="pro-card-title">Busiest Store Hours</h3>
+                        <span style={{ fontSize: 12, color: '#94a3b8' }}>Peak Performance</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={stats.topHours}>
+                          <XAxis dataKey="name" stroke={MUTED} fontSize={11} axisLine={false} tickLine={false} />
+                          <Tooltip formatter={(v) => [`Rp${Number(v).toLocaleString()}`, 'Sales']} cursor={{ fill: '#f1f5f9' }} />
+                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                            {stats.topHours.map((_, index) => {
+                              let c = '#94a3b8';
+                              if (index === 0) c = '#10b981';
+                              else if (index === 1) c = '#facc15';
+                              else if (index === 2) c = '#f97316';
+                              else if (index === 3) c = '#ef4444';
+                              return <Cell key={`cell-dash-${index}`} fill={c} />;
+                            })}
+                          </Bar>
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
 
@@ -1274,14 +1310,6 @@ export const DashboardPage = () => {
                     </div>
                     <div className="dashboard-filters">
                       <label>
-                        <span className="dashboard-label">Status</span>
-                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="dashboard-select">
-                          <option value="all">All</option>
-                          <option value="completed">Completed</option>
-                          <option value="canceled">Canceled</option>
-                        </select>
-                      </label>
-                      <label>
                         <span className="dashboard-label">Payment</span>
                         <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className="dashboard-select">
                           {paymentOptions.map((m) => (
@@ -1292,25 +1320,43 @@ export const DashboardPage = () => {
                     </div>
                   </div>
 
-                  <div className="dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '24px' }}>
-                    <div className="pro-card main-kpi" style={{ background: 'linear-gradient(135deg, #2a4d46, #3d7066)', color: 'white' }}>
-                      <span className="kpi-label" style={{ display: 'block', fontSize: '13px', opacity: 0.9 }}>Revenue</span>
-                      <span className="kpi-value" style={{ display: 'block', fontSize: '28px', fontWeight: 800, margin: '8px 0' }}>Rp{stats.revenue.toLocaleString()}</span>
-                      <div className="kpi-trend" style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <TrendingUp size={14} /> {stats.transactionCount} transactions
-                      </div>
+                  <div className="dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                    <div className="pro-card" style={{ background: 'var(--pro-primary)', color: 'white', borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
+                      <TrendingUp size={24} color="white" style={{ marginBottom: '12px' }} />
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8, marginBottom: '6px' }}>Net Sales</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900 }}>Rp{stats.revenue.toLocaleString()}</span>
                     </div>
-                    <div className="pro-card">
-                      <span className="kpi-label" style={{ display: 'block', fontSize: '13px', color: '#64748b' }}>Profit</span>
-                      <span className="kpi-value" style={{ display: 'block', fontSize: '24px', fontWeight: 800, margin: '8px 0', color: stats.netProfit >= 0 ? '#10b981' : '#ef4444' }}>
-                        Rp{stats.netProfit.toLocaleString()}
+                    <div className="pro-card" style={{ borderLeft: `4px solid ${stats.netProfit >= 0 ? '#10b981' : '#ef4444'}`, padding: '20px' }}>
+                      <Activity size={24} color={stats.netProfit >= 0 ? '#10b981' : '#ef4444'} style={{ marginBottom: '12px' }} />
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Profit</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900, color: stats.netProfit >= 0 ? '#10b981' : '#ef4444' }}>
+                        {stats.netProfit < 0 ? '-' : ''}Rp{Math.abs(stats.netProfit).toLocaleString()}
                       </span>
-                      <span className="kpi-meta" style={{ fontSize: '13px', color: '#64748b' }}>{stats.margin.toFixed(1)}% margin</span>
                     </div>
-                    <div className="pro-card">
-                      <span className="kpi-label" style={{ display: 'block', fontSize: '13px', color: '#64748b' }}>Avg. Ticket</span>
-                      <span className="kpi-value" style={{ display: 'block', fontSize: '24px', fontWeight: 800, margin: '8px 0', color: '#1e293b' }}>Rp{stats.avgTicket.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                      <span className="kpi-meta" style={{ fontSize: '13px', color: '#64748b' }}>per sale</span>
+                    <div className="pro-card" style={{ borderLeft: '4px solid #facc15', padding: '20px' }}>
+                      <ArrowLeftRight size={24} color="#facc15" style={{ marginBottom: '12px' }} />
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Transactions</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900, color: '#1e293b' }}>{stats.transactionCount}</span>
+                    </div>
+                    <div className="pro-card" style={{ borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
+                      <Package size={24} color="var(--pro-primary)" style={{ marginBottom: '12px' }} />
+                      <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Items Sold</span>
+                      <span className="kpi-value" style={{ display: 'block', fontSize: '22px', fontWeight: 900, color: '#1e293b' }}>{stats.itemsSold.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px' }}>
+                      <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Avg. Ticket</span>
+                      <span style={{ fontSize: '15px', fontWeight: 900, color: '#1e293b' }}>Rp{stats.avgTicket.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px' }}>
+                      <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Margin</span>
+                      <span style={{ fontSize: '15px', fontWeight: 900, color: stats.margin >= 0 ? '#10b981' : '#ef4444' }}>{stats.margin.toFixed(1)}%</span>
+                    </div>
+                    <div className="pro-card" style={{ flex: 1, padding: '12px 16px' }}>
+                      <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Expenses</span>
+                      <span style={{ fontSize: '15px', fontWeight: 900, color: '#ef4444' }}>-Rp{stats.totalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
 

@@ -126,7 +126,7 @@ function App() {
 
       <main className={`${isDashboard ? 'dashboard-mode' : ''}`}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={isSignedIn ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
           <Route path="/download" element={<DownloadPage />} />
 
           <Route path="/privacy" element={<PrivacyPage />} />
