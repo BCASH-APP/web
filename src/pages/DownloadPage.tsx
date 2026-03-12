@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Download,
   Smartphone,
@@ -29,7 +30,10 @@ const STEPS = [
 ];
 
 export const DownloadPage = () => {
+  const [clicked, setClicked] = useState(false);
+
   const handleDownload = () => {
+    setClicked(true);
     window.open(APK_GITHUB_URL, '_blank', 'noopener,noreferrer');
   };
 
@@ -62,6 +66,15 @@ export const DownloadPage = () => {
             <span>Download APK Debug</span>
           </button> */}
         </div>
+        <p className="dl-btn-hint">
+          {clicked ? (
+            <span className="dl-downloading">
+              <CheckCircle2 size={13} /> Download started — check your notifications
+            </span>
+          ) : (
+            'Android only · Latest release'
+          )}
+        </p>
       </div>
 
       {/* Two-col */}
