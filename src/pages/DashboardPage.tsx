@@ -1105,14 +1105,16 @@ export const DashboardPage = () => {
                                         {p.name || 'Unnamed Product'}
                                         <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
                                           {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
-                                          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>HPP: Rp{(p.cost || 0).toLocaleString()}</span>
+                                          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
+                                            HPP: Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString() : (p.cost || 0).toLocaleString()}
+                                          </span>
                                         </div>
                                       </span>
                                     </div>
                                   </td>
                                   <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
                                   <td align="right" className="hpp-val-cell">
-                                    <span>Rp{(p.cost || 0).toLocaleString()}</span>
+                                    <span>Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString() : (p.cost || 0).toLocaleString()}</span>
                                   </td>
                                   <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                   <td align="right">
