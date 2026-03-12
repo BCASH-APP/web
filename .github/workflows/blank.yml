@@ -3,7 +3,7 @@ name: Deploy Vite app to Appwrite
 on:
   push:
     branches:
-      - main  # Trigger when pushing to main branch
+      - main  # Trigger when pushing to main branch (auto upload)
 
 jobs:
   build-and-deploy:
