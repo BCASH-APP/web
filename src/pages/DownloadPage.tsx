@@ -58,14 +58,16 @@ export const DownloadPage = () => {
           in with your existing account.
         </p>
 
-        <button className="dl-btn-main" onClick={handleDownload} type="button">
-          <Download size={20} />
-          Download APK
-        </button>
-        {/* <button className="dl-btn-main" onClick={handleDownloadDebug} type="button">
-          <Download size={20} />
-          Download APK Debug
-        </button> */}
+        <div className="dl-hero-actions">
+          <button className="dl-btn-main" onClick={handleDownload} type="button">
+            <Download size={20} />
+            <span>Download APK</span>
+          </button>
+          {/* <button className="dl-btn-main" onClick={handleDownloadDebug} type="button">
+            <Download size={20} />
+            <span>Download APK Debug</span>
+          </button> */}
+        </div>
         <p className="dl-btn-hint">
           {clicked ? (
             <span className="dl-downloading">
@@ -136,7 +138,8 @@ export const DownloadPage = () => {
           rel="noopener noreferrer"
           className="dl-btn-outline"
         >
-          <Github size={16} /> View all releases on GitHub
+          <Github size={16} />
+          <span>View all releases on GitHub</span>
         </a>
       </div>
     </div>
