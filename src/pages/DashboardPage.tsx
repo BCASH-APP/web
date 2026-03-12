@@ -332,7 +332,7 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                             <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b' }}>HPP Price =</span>
                             <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e293b' }}>
-                              Rp{getRecipeCost(formData.recipeId).toLocaleString()}
+                              Rp{getRecipeCost(formData.recipeId).toLocaleString('id-ID')}
                             </span>
                           </div>
                           {formData.price && parseFloat(formData.price) > 0 && (() => {
@@ -348,7 +348,7 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                                   fontWeight: '700', 
                                   color: margin >= 30 ? '#22C55E' : '#f59e0b' 
                                 }}>
-                                  Rp{profit.toLocaleString()} ({margin.toFixed(1)}%)
+                                  Rp{profit.toLocaleString('id-ID')} ({margin.toFixed(1)}%)
                                 </span>
                               </div>
                             );
@@ -575,15 +575,22 @@ export const DashboardPage = () => {
 
   // HPP Calculation Function
   const getRecipeCost = (recipeId: string): number => {
+    if (!recipeId || !recipes || !recipeLines || !ingredients) return 0;
+    
     const recipe = recipes.find((r: RecipeDoc) => r.$id === recipeId);
     if (!recipe) return 0;
 
     const lines = recipeLines.filter((rl: RecipeLineDoc) => rl.recipeId === recipeId);
+    if (!lines || lines.length === 0) return 0;
+
     const materialCost = lines.reduce((acc, line) => {
+      if (!line || !line.ingredientId) return acc;
+      
       const ingredient = ingredients.find((ing: IngredientDoc) => ing.$id === line.ingredientId);
-      if (!ingredient) return acc;
+      if (!ingredient || !ingredient.costPerUnit) return acc;
+      
       // Convert to base unit and calculate cost
-      const baseQty = line.quantity; // Simplified - assuming line.quantity is already in base units
+      const baseQty = line.quantity || 0;
       const unitCost = ingredient.costPerUnit || 0;
       return acc + (baseQty * unitCost);
     }, 0);
@@ -752,14 +759,14 @@ export const DashboardPage = () => {
           return prev;
         };
 
-        if (collectionId === productsCollectionId) setProducts(handler);
-        else if (collectionId === categoriesCollectionId) setCategories(handler);
-        else if (collectionId === ingredientsCollectionId) setIngredients(handler);
-        else if (collectionId === recipesCollectionId) setRecipes(handler);
-        else if (collectionId === recipeLinesCollectionId) setRecipeLines(handler);
-        else if (collectionId === salesCollectionId) setSaleHeaders(handler);
-        else if (collectionId === saleItemsCollectionId) setSaleItems(handler);
-        else if (collectionId === expensesCollectionId) setExpenses(handler);
+        if (collectionId === productsCollectionId) setProducts(prev => handler(prev));
+        else if (collectionId === categoriesCollectionId) setCategories(prev => handler(prev));
+        else if (collectionId === ingredientsCollectionId) setIngredients(prev => handler(prev));
+        else if (collectionId === recipesCollectionId) setRecipes(prev => handler(prev));
+        else if (collectionId === recipeLinesCollectionId) setRecipeLines(prev => handler(prev));
+        else if (collectionId === salesCollectionId) setSaleHeaders(prev => handler(prev));
+        else if (collectionId === saleItemsCollectionId) setSaleItems(prev => handler(prev));
+        else if (collectionId === expensesCollectionId) setExpenses(prev => handler(prev));
       }
     );
 
@@ -1106,7 +1113,7 @@ export const DashboardPage = () => {
                                         <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
                                           {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
                                           <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
-                                            HPP: Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString() : (p.cost || 0).toLocaleString()}
+                                            HPP: Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString('id-ID') : (p.cost || 0).toLocaleString('id-ID')}
                                           </span>
                                         </div>
                                       </span>
@@ -1114,7 +1121,7 @@ export const DashboardPage = () => {
                                   </td>
                                   <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
                                   <td align="right" className="hpp-val-cell">
-                                    <span>Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString() : (p.cost || 0).toLocaleString()}</span>
+                                    <span>Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString('id-ID') : (p.cost || 0).toLocaleString('id-ID')}</span>
                                   </td>
                                   <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                   <td align="right">
