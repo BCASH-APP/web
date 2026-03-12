@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Download,
   Smartphone,
@@ -6,8 +5,6 @@ import {
   Zap,
   Star,
   CheckCircle2,
-  Github,
-  AlertTriangle,
 } from 'lucide-react';
 import './pages.css';
 
@@ -32,10 +29,7 @@ const STEPS = [
 ];
 
 export const DownloadPage = () => {
-  const [clicked, setClicked] = useState(false);
-
   const handleDownload = () => {
-    setClicked(true);
     window.open(APK_GITHUB_URL, '_blank', 'noopener,noreferrer');
   };
 
@@ -68,15 +62,6 @@ export const DownloadPage = () => {
             <span>Download APK Debug</span>
           </button> */}
         </div>
-        <p className="dl-btn-hint">
-          {clicked ? (
-            <span className="dl-downloading">
-              <CheckCircle2 size={13} /> Download started — check your notifications
-            </span>
-          ) : (
-            'Android only · Latest release from GitHub'
-          )}
-        </p>
       </div>
 
       {/* Two-col */}
@@ -110,37 +95,6 @@ export const DownloadPage = () => {
             ))}
           </ol>
         </div>
-      </div>
-
-      {/* Security notice */}
-      <div className="dl-notice">
-        <AlertTriangle size={16} className="dl-notice-icon" />
-        <p>
-          <strong>Security notice:</strong> This APK is distributed directly from our{' '}
-          <a
-            href="https://github.com/basthdev/bcash-pos/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="dl-link"
-          >
-            GitHub Releases <Github size={12} style={{ display: 'inline', verticalAlign: 'middle' }} />
-          </a>
-          . You can inspect the source code and release assets there. Always install from trusted
-          sources.
-        </p>
-      </div>
-
-      {/* Alt CTA */}
-      <div className="dl-alt">
-        <a
-          href="https://github.com/basthdev/bcash-pos/releases"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="dl-btn-outline"
-        >
-          <Github size={16} />
-          <span>View all releases on GitHub</span>
-        </a>
       </div>
     </div>
   );
