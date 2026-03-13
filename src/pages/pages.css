@@ -2692,4 +2692,70 @@
   .dashboard-scrollable-content {
     padding: 1rem;
   }
+
+  /* Landing Page Mobile Fixes */
+  .landing-hero {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .landing-left {
+    position: relative;
+    top: 0;
+    order: 2; /* Move visuals below text on mobile */
+  }
+
+  .landing-phone-stack {
+    height: 280px;
+  }
+
+  .landing-phone {
+    width: 75%;
+    height: 240px;
+  }
+
+  .landing-right {
+    order: 1;
+    text-align: center;
+    align-items: center;
+  }
+
+  .landing-title {
+    font-size: 1.8rem;
+  }
+
+  .landing-title-accent {
+    font-size: 1.2rem;
+  }
+
+  .landing-subtitle {
+    margin: 0 auto;
+  }
+
+  .landing-cta-row {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .landing-cta-row a {
+    width: 100%;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .landing-footer-inner {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .landing-footer-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
 }

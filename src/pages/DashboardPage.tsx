@@ -16,31 +16,32 @@ import {
   YAxis,
 } from 'recharts';
 import {
-  TrendingUp,
-  AlertCircle,
-  Package,
-  ShoppingBasket,
-  Tags,
-  Utensils,
-  LayoutDashboard,
-  BarChart2,
-  History,
-  ChevronRight,
-  Search,
-  Plus,
-  Users,
-  Edit2,
-  Trash2,
-  X,
-  Smartphone,
-  Banknote,
-  QrCode,
-  ArrowLeftRight,
   Activity,
-  ArrowUp,
+  AlertCircle,
   ArrowDown,
-  Receipt,
+  ArrowLeftRight,
+  ArrowUp,
+  Banknote,
+  BarChart2,
+  ChevronRight,
   ClipboardList,
+  Edit2,
+  History,
+  LayoutDashboard,
+  Menu,
+  Package,
+  Plus,
+  QrCode,
+  Receipt,
+  Search,
+  ShoppingBasket,
+  Smartphone,
+  Tags,
+  Trash2,
+  TrendingUp,
+  Users,
+  Utensils,
+  X,
 } from 'lucide-react';
 import logoIcon from '../assets/appIcon/splash-icon-transparant.png';
 import './pages.css';
@@ -544,6 +545,7 @@ export const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'analytics'>('home');
   const [managementView, setManagementView] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const hasAnalyticsAccess = planId === 'premium';
 
@@ -953,7 +955,8 @@ export const DashboardPage = () => {
 
   return (
     <div className="pro-dashboard-shell">
-      <aside className="pro-sidebar">
+      {sidebarOpen && <div className="pro-sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      <aside className={`pro-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="pro-sidebar-logo">
           <img src={logoIcon} alt="Bcash" style={{ width: 32, height: 32 }} />
           <span>BCash POS</span>
@@ -1014,6 +1017,9 @@ export const DashboardPage = () => {
       <main className="pro-main">
         <header className="pro-topbar">
           <div className="pro-topbar-left">
+            <button className="pro-mobile-toggle" onClick={() => setSidebarOpen(true)}>
+              <Menu size={24} />
+            </button>
             <h1 className="pro-topbar-title">
               {managementView ? managementView.charAt(0).toUpperCase() + managementView.slice(1) : (activeTab === 'home' ? 'Dashboard' : 'Analytics')}
             </h1>
