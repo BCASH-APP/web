@@ -614,6 +614,11 @@
   .pro-home-grid {
     grid-template-columns: 1fr;
   }
+  
+  .pro-two-col {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 @media (max-width: 768px) {

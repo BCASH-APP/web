@@ -647,7 +647,18 @@ export const DashboardPage = () => {
 
     if (!colId) return;
     try {
-      const payload = { ...data, clerkUserId, orgId: activeStoreId || null };
+      const now = new Date().toISOString();
+      const payload = { 
+        ...data, 
+        clerkUserId, 
+        orgId: activeStoreId || null,
+        // Ensure timestamp is present for all CRUD items as required by sync schema
+        timestamp: data.timestamp || now,
+        updatedAt: now,
+        // Add createdAt for new items if missing (though Appwrite provides $createdAt)
+        ...(editingItem ? {} : { createdAt: now })
+      };
+
       if (editingItem) {
         const updated = await update<any>(colId, editingItem.$id, payload);
         if (managementView === 'products') setProducts(products.map(p => p.$id === updated.$id ? updated : p));
@@ -676,8 +687,12 @@ export const DashboardPage = () => {
   const handleCancelSale = async (id: string) => {
     if (!confirm('Are you sure you want to cancel this sale? This action is permanent.')) return;
     try {
-      await update(salesCollectionId, id, { status: 'canceled' });
-      setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled' } : h));
+      const now = new Date().toISOString();
+      await update(salesCollectionId, id, { 
+        status: 'canceled',
+        updatedAt: now
+      });
+      setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled', updatedAt: now } : h));
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Cancel failed');
     }
