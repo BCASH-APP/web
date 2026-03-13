@@ -963,6 +963,21 @@ export const DashboardPage = () => {
         </div>
 
         <nav className="pro-sidebar-nav">
+          <div className="pro-sidebar-store">
+            <div className="pro-store-label">Selected Store</div>
+            <select 
+              className="pro-store-select"
+              onChange={(e) => setActiveStoreId(e.target.value)} 
+              value={activeStoreId}
+            >
+              {organizationList.map((m) => (
+                <option key={m.organization.id} value={m.organization.id}>
+                  {m.organization.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="nav-group" style={{ marginBottom: 24 }}>
             <span className="nav-group-title" style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: 1, paddingLeft: 20, marginBottom: 8, display: 'block' }}>MAIN MENU</span>
             <button className={`pro-nav-item ${activeTab === 'home' && !managementView ? 'active' : ''}`} onClick={() => { setActiveTab('home'); setManagementView(null); }}>
@@ -1035,20 +1050,6 @@ export const DashboardPage = () => {
           </div>
 
           <div className="pro-topbar-right">
-            <a href="dashingbakery://" className="pro-store-pill" style={{ textDecoration: 'none' }} title="Open BCash App">
-              <Smartphone size={16} color="#3d7066" /> <span className="hide-mobile">Open App</span>
-            </a>
-            <div className="pro-store-pill">
-              <span className="org-label" style={{ color: '#94a3b8' }}>Store</span>
-              <select onChange={(e) => setActiveStoreId(e.target.value)} value={activeStoreId}>
-                {organizationList.map((m) => (
-                  <option key={m.organization.id} value={m.organization.id}>
-                    {m.organization.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="pro-user-profile">
               <div className="pro-user-info hide-mobile" style={{ textAlign: 'right' }}>
                 <span className="pro-user-name">{user?.firstName || 'Owner'}</span>
