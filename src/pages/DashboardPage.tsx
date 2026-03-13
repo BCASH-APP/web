@@ -962,14 +962,11 @@ export const DashboardPage = () => {
           <span>BCash POS</span>
         </div>
 
-        <nav className="pro-sidebar-nav">
-          <div className="pro-sidebar-store">
-            <div className="pro-store-label">Selected Store</div>
-            <select 
-              className="pro-store-select"
-              onChange={(e) => setActiveStoreId(e.target.value)} 
-              value={activeStoreId}
-            >
+        <div className="pro-sidebar-store-selector show-mobile">
+          <span className="pro-sidebar-label">SWITCH STORE</span>
+          <div className="pro-sidebar-select-wrap">
+            <Smartphone size={16} />
+            <select onChange={(e) => setActiveStoreId(e.target.value)} value={activeStoreId}>
               {organizationList.map((m) => (
                 <option key={m.organization.id} value={m.organization.id}>
                   {m.organization.name}
@@ -977,7 +974,9 @@ export const DashboardPage = () => {
               ))}
             </select>
           </div>
+        </div>
 
+        <nav className="pro-sidebar-nav">
           <div className="nav-group" style={{ marginBottom: 24 }}>
             <span className="nav-group-title" style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: 1, paddingLeft: 20, marginBottom: 8, display: 'block' }}>MAIN MENU</span>
             <button className={`pro-nav-item ${activeTab === 'home' && !managementView ? 'active' : ''}`} onClick={() => { setActiveTab('home'); setManagementView(null); }}>
@@ -1050,6 +1049,20 @@ export const DashboardPage = () => {
           </div>
 
           <div className="pro-topbar-right">
+            <a href="dashingbakery://" className="pro-store-pill hide-mobile" style={{ textDecoration: 'none' }} title="Open BCash App">
+              <Smartphone size={16} color="#3d7066" /> <span>Open App</span>
+            </a>
+            <div className="pro-store-pill hide-mobile">
+              <span className="org-label" style={{ color: '#94a3b8' }}>Store</span>
+              <select onChange={(e) => setActiveStoreId(e.target.value)} value={activeStoreId} style={{ background: 'transparent', border: 'none', fontWeight: 700, color: 'var(--pro-text-main)', fontSize: 13, cursor: 'pointer' }}>
+                {organizationList.map((m) => (
+                  <option key={m.organization.id} value={m.organization.id}>
+                    {m.organization.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="pro-user-profile">
               <div className="pro-user-info hide-mobile" style={{ textAlign: 'right' }}>
                 <span className="pro-user-name">{user?.firstName || 'Owner'}</span>
@@ -1102,7 +1115,7 @@ export const DashboardPage = () => {
                               .filter(p => !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.$id.includes(searchQuery))
                               .map(p => (
                                 <tr key={p.$id}>
-                                  <td>
+                                  <td data-label="Name">
                                     <div className="manage-item-cell">
                                       {p.imageUrl ? (
                                         <img
@@ -1126,12 +1139,12 @@ export const DashboardPage = () => {
                                       </span>
                                     </div>
                                   </td>
-                                  <td>{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
-                                  <td align="right" className="hpp-val-cell">
+                                  <td data-label="Category">{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
+                                  <td data-label="HPP" align="right" className="hpp-val-cell">
                                     <span>Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString('id-ID') : (p.cost || 0).toLocaleString('id-ID')}</span>
                                   </td>
-                                  <td align="right">Rp{(p.price || 0).toLocaleString()}</td>
-                                  <td align="right">
+                                  <td data-label="Price" align="right">Rp{(p.price || 0).toLocaleString()}</td>
+                                  <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(p)}><Edit2 size={14} /></button>
                                       <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(p.$id)}><Trash2 size={14} /></button>
@@ -1170,14 +1183,14 @@ export const DashboardPage = () => {
                               .filter(c => !searchQuery || c.name?.toLowerCase().includes(searchQuery.toLowerCase()))
                               .map(c => (
                                 <tr key={c.$id}>
-                                  <td>
+                                  <td data-label="Name">
                                     <div className="manage-item-cell">
                                       <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
                                       <span className="manage-item-name">{c.name || 'Unnamed'}</span>
                                     </div>
                                   </td>
-                                  <td>{products.filter(p => p.categoryId === c.$id).length} products</td>
-                                  <td align="right">
+                                  <td data-label="Items">{products.filter(p => p.categoryId === c.$id).length} products</td>
+                                  <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
                                       <button className="icon-btn delete-btn" title="Delete" onClick={() => handleDelete(c.$id)}><Trash2 size={14} /></button>
@@ -1214,15 +1227,15 @@ export const DashboardPage = () => {
                               .filter(h => !searchQuery || h.$id.includes(searchQuery) || pmOf(h).includes(searchQuery.toLowerCase()) || h.status?.includes(searchQuery.toLowerCase()))
                               .map(h => (
                                 <tr key={h.$id} className={h.status === 'canceled' ? 'row-canceled' : ''}>
-                                  <td>{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                                  <td>
+                                  <td data-label="Date">{new Date(tsOf(h)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                                  <td data-label="Status">
                                     <span className={`badge-${h.status || 'completed'}`}>
                                       {(h.status || 'completed').toUpperCase()}
                                     </span>
                                   </td>
-                                  <td>{(h.paymentMethod || 'cash').toUpperCase()}</td>
-                                  <td align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
-                                  <td align="right">
+                                  <td data-label="Payment">{(h.paymentMethod || 'cash').toUpperCase()}</td>
+                                  <td data-label="Total" align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                                  <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
                                       {h.status !== 'canceled' && (
@@ -1257,7 +1270,7 @@ export const DashboardPage = () => {
                           <tbody>
                             {organizationList.map(m => (
                               <tr key={m.id}>
-                                <td>
+                                <td data-label="Name">
                                   <div className="manage-item-cell">
                                     {m.publicUserData?.imageUrl && (
                                       <img src={m.publicUserData.imageUrl} alt="" className="staff-avatar" />
@@ -1265,11 +1278,11 @@ export const DashboardPage = () => {
                                     <span className="manage-item-name">{m.publicUserData?.firstName} {m.publicUserData?.lastName}</span>
                                   </div>
                                 </td>
-                                <td>{m.publicUserData?.identifier}</td>
-                                <td>
+                                <td data-label="Email">{m.publicUserData?.identifier}</td>
+                                <td data-label="Role">
                                   <span className="role-badge">{(m.role || 'member').toUpperCase()}</span>
                                 </td>
-                                <td align="right">
+                                <td data-label="Status" align="right">
                                   <span className="status-online">ACTIVE</span>
                                 </td>
                               </tr>
@@ -1301,18 +1314,18 @@ export const DashboardPage = () => {
                           <tbody>
                             {ingredients.map(ing => (
                               <tr key={ing.$id}>
-                                <td>
+                                <td data-label="Material">
                                   <div className="manage-item-cell">
                                     <Package size={16} color="#64748b" />
                                     <span className="manage-item-name">{ing.name}</span>
                                   </div>
                                 </td>
-                                <td>
+                                <td data-label="Stock">
                                   <span style={{ fontWeight: 700, color: (ing.stockQtyBase || 0) < (ing.minStockThreshold || 0) ? '#ef4444' : '#1e293b' }}>
                                     {ing.stockQtyBase?.toLocaleString()} {ing.baseUnit}
                                   </span>
                                 </td>
-                                <td align="right">Rp{ing.costPerUnit?.toLocaleString()}</td>
+                                <td data-label="Cost/Unit" align="right">Rp{ing.costPerUnit?.toLocaleString()}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1339,14 +1352,14 @@ export const DashboardPage = () => {
                           <tbody>
                             {recipes.map(rec => (
                               <tr key={rec.$id}>
-                                <td>
+                                <td data-label="Recipe Name">
                                   <div className="manage-item-cell">
                                     <Utensils size={16} color="#64748b" />
                                     <span className="manage-item-name">{rec.name}</span>
                                   </div>
                                 </td>
-                                <td>{rec.yield} units</td>
-                                <td align="right">{rec.overheadPercent}%</td>
+                                <td data-label="Yield">{rec.yield} units</td>
+                                <td data-label="Overhead" align="right">{rec.overheadPercent}%</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1382,15 +1395,15 @@ export const DashboardPage = () => {
                               .filter(exp => !searchQuery || exp.description?.toLowerCase().includes(searchQuery.toLowerCase()) || exp.$id.includes(searchQuery))
                               .map(exp => (
                                 <tr key={exp.$id}>
-                                  <td>
+                                  <td data-label="Description">
                                     <div className="manage-item-cell">
                                       <Receipt size={16} color="#f59e0b" />
                                       <span className="manage-item-name">{exp.description || 'Custom Expense'}</span>
                                     </div>
                                   </td>
-                                  <td>{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
-                                  <td align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
-                                  <td align="right">
+                                  <td data-label="Date">{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
+                                  <td data-label="Amount" align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
+                                  <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" onClick={() => handleEdit(exp)}><Edit2 size={14} /></button>
                                       <button className="icon-btn delete-btn" onClick={() => handleDelete(exp.$id)}><Trash2 size={14} /></button>
@@ -1426,7 +1439,7 @@ export const DashboardPage = () => {
                               const isPositive = st.deltaBase > 0;
                               return (
                                 <tr key={st.$id}>
-                                  <td>
+                                  <td data-label="Ingredient">
                                     <div className="manage-item-cell">
                                       <div style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
                                         {isPositive ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
@@ -1434,13 +1447,13 @@ export const DashboardPage = () => {
                                       <span className="manage-item-name">{ingred?.name || 'Loading...'}</span>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="Change">
                                     <span style={{ fontWeight: 800, color: isPositive ? '#10b981' : '#ef4444' }}>
                                       {isPositive ? '+' : ''}{st.deltaBase} {ingred?.baseUnit}
                                     </span>
                                   </td>
-                                  <td><span className="text-muted" style={{ fontSize: '12px' }}>{st.reason || 'Correction'}</span></td>
-                                  <td align="right">{new Date(st.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
+                                  <td data-label="Reason"><span className="text-muted" style={{ fontSize: '12px' }}>{st.reason || 'Correction'}</span></td>
+                                  <td data-label="Date" align="right">{new Date(st.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
                                 </tr>
                               );
                             })}
@@ -1645,7 +1658,7 @@ export const DashboardPage = () => {
                       </label>
                     </div>
                   </div>
-                  <div className="dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                  <div className="dashboard-kpi-grid pro-kpi-grid">
                     <div className="pro-card" style={{ background: '#f8fafc', color: '#1e293b', borderLeft: '4px solid var(--pro-primary)', padding: '20px' }}>
                       <TrendingUp size={24} color="var(--pro-primary)" style={{ marginBottom: '12px' }} />
                       <span className="kpi-label" style={{ display: 'block', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Net Sales</span>
