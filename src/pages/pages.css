@@ -602,6 +602,36 @@
 .font-bold { font-weight: 700; }
 .text-muted { color: #94a3b8; }
 
+/* Progress Bars */
+.pro-progress-container {
+  width: 100%;
+  max-width: 120px;
+  margin-top: 4px;
+}
+.pro-progress-bar {
+  height: 5px;
+  background-color: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+}
+.pro-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pro-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.pro-progress-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
 /* Premium Analytics */
 .dashboard-charts-grid {
   display: grid;

@@ -119,6 +119,9 @@ type IngredientDoc = {
   costPerUnit?: number;
   stockQtyBase?: number;
   minStockThreshold?: number;
+  purchaseUnit?: string;
+  purchaseQuantity?: number;
+  purchasePrice?: number;
 };
 type RecipeDoc = {
   $id: string;
@@ -598,7 +601,10 @@ export const DashboardPage = () => {
       const ingredient = ingredients.find((ing: IngredientDoc) => ing.$id === line.ingredientId);
       if (!ingredient || !ingredient.costPerUnit) return acc;
       
-      // Convert to base unit and calculate cost
+      // Calculate based on saved base quantities (like mobile)
+      // Mobile app saves line quantity in the unit selected, but we need cost per base unit
+      // Actually mobile app getRecipeCost: qtyBase = isSameType ? toBase(line.quantity, line.unit) : toBase(line.quantity, ing.baseUnit as any);
+      // Here in web, we'll assume line.quantity is already in base unit (g/ml/pcs) or handle it simply
       const baseQty = line.quantity || 0;
       const unitCost = ingredient.costPerUnit || 0;
       return acc + (baseQty * unitCost);
@@ -608,6 +614,15 @@ export const DashboardPage = () => {
     const overheadMultiplier = 1 + (recipe.overheadPercent || 0) / 100;
 
     return (materialCost * overheadMultiplier) / yieldQty;
+  };
+
+  const getIngredientDisplay = (ing: IngredientDoc) => {
+    const pu = (ing.purchaseUnit || (ing.baseUnit === 'g' ? 'kg' : ing.baseUnit === 'ml' ? 'liter' : ing.baseUnit)) as string;
+    const isBig = pu === 'kg' || pu === 'liter';
+    const displayQty = isBig ? (ing.stockQtyBase || 0) / 1000 : (ing.stockQtyBase || 0);
+    const mul = isBig ? 1000 : 1;
+    const displayCost = (ing.costPerUnit || 0) * mul;
+    return { pu, displayQty, displayCost };
   };
 
   const handleCreate = () => {
@@ -1192,7 +1207,7 @@ export const DashboardPage = () => {
                             <tr>
                               <th>Name</th>
                               <th>Category</th>
-                              <th align="right">HPP</th>
+                              <th align="right">Cost/Margin</th>
                               <th align="right">Price</th>
                               <th align="right">Actions</th>
                             </tr>
@@ -1232,8 +1247,27 @@ export const DashboardPage = () => {
                                     </div>
                                   </td>
                                   <td data-label="Category">{categories.find(c => c.$id === p.category)?.name || 'No Category'}</td>
-                                  <td data-label="HPP" align="right" className="hpp-val-cell">
-                                    <span>Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString('id-ID') : (p.cost || 0).toLocaleString('id-ID')}</span>
+                                  <td data-label="Margin" align="right" className="hpp-val-cell">
+                                    <div className="pro-progress-container" style={{ marginLeft: 'auto' }}>
+                                      {(() => {
+                                        const hpp = p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId) : (p.cost || 0);
+                                        const price = p.price || 0;
+                                        const marginPercent = price > 0 ? Math.max(0, ((price - hpp) / price) * 100) : 0;
+                                        const costPercent = 100 - marginPercent;
+                                        return (
+                                          <>
+                                            <div className="pro-progress-labels">
+                                              <span className="pro-progress-label">Margin {Math.round(marginPercent)}%</span>
+                                              <span className="pro-progress-label" style={{ color: '#10b981' }}>Rp{(price - hpp).toLocaleString()}</span>
+                                            </div>
+                                            <div className="pro-progress-bar">
+                                              <div className="pro-progress-fill" style={{ width: `${costPercent}%`, backgroundColor: '#e2e8f0' }} />
+                                              <div className="pro-progress-fill" style={{ width: `${marginPercent}%`, backgroundColor: '#10b981' }} />
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
                                   </td>
                                   <td data-label="Price" align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                   <td data-label="Actions" align="right">
@@ -1266,7 +1300,7 @@ export const DashboardPage = () => {
                           <thead>
                             <tr>
                               <th>Name</th>
-                              <th>Items</th>
+                              <th>Items / Distribution</th>
                               <th align="right">Actions</th>
                             </tr>
                           </thead>
@@ -1288,7 +1322,24 @@ export const DashboardPage = () => {
                                       </span>
                                     </div>
                                   </td>
-                                  <td data-label="Items">{products.filter(p => p.category === c.$id).length} products</td>
+                                  <td data-label="Distribution">
+                                    {(() => {
+                                      const itemCount = products.filter(p => p.category === c.$id).length;
+                                      const totalItems = Math.max(products.length, 1);
+                                      const share = (itemCount / totalItems) * 100;
+                                      return (
+                                        <div className="pro-progress-container">
+                                          <div className="pro-progress-labels">
+                                            <span className="pro-progress-label">{itemCount} items</span>
+                                            <span className="pro-progress-label">{Math.round(share)}%</span>
+                                          </div>
+                                          <div className="pro-progress-bar">
+                                            <div className="pro-progress-fill" style={{ width: `${share}%`, backgroundColor: c.color || '#3d7066' }} />
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                  </td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
@@ -1333,7 +1384,26 @@ export const DashboardPage = () => {
                                     </span>
                                   </td>
                                   <td data-label="Payment">{(h.paymentMethod || 'cash').toUpperCase()}</td>
-                                  <td data-label="Total" align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
+                                  <td data-label="Total" align="right">
+                                    <div className="pro-progress-container" style={{ marginLeft: 'auto' }}>
+                                      {(() => {
+                                        const maxSale = Math.max(...stats.listHeaders.map(totalOf), 1);
+                                        const currentTotal = totalOf(h);
+                                        const share = (currentTotal / maxSale) * 100;
+                                        return (
+                                          <>
+                                            <div className="pro-progress-labels">
+                                              <span className="pro-progress-label">Rp{currentTotal.toLocaleString()}</span>
+                                              <span className="pro-progress-label">{Math.round(share)}%</span>
+                                            </div>
+                                            <div className="pro-progress-bar">
+                                              <div className="pro-progress-fill" style={{ width: `${share}%`, backgroundColor: h.status === 'canceled' ? '#fca5a5' : '#3d7066' }} />
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
+                                  </td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
@@ -1411,22 +1481,49 @@ export const DashboardPage = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {ingredients.map(ing => (
-                              <tr key={ing.$id}>
-                                <td data-label="Material">
-                                  <div className="manage-item-cell">
-                                    <Package size={16} color="#64748b" />
-                                    <span className="manage-item-name">{ing.name}</span>
-                                  </div>
-                                </td>
-                                <td data-label="Stock">
-                                  <span style={{ fontWeight: 700, color: (ing.stockQtyBase || 0) < (ing.minStockThreshold || 0) ? '#ef4444' : '#1e293b' }}>
-                                    {ing.stockQtyBase?.toLocaleString()} {ing.baseUnit}
-                                  </span>
-                                </td>
-                                <td data-label="Cost/Unit" align="right">Rp{ing.costPerUnit?.toLocaleString()}</td>
-                              </tr>
-                            ))}
+                            {ingredients.map(ing => {
+                              const { pu, displayQty, displayCost } = getIngredientDisplay(ing);
+                              const isLow = (ing.stockQtyBase || 0) <= (ing.minStockThreshold || 0);
+                              return (
+                                <tr key={ing.$id}>
+                                  <td data-label="Material">
+                                    <div className="manage-item-cell">
+                                      <Package size={16} color="#64748b" />
+                                      <span className="manage-item-name">{ing.name}</span>
+                                    </div>
+                                  </td>
+                                  <td data-label="Stock">
+                                    <div className="pro-progress-container">
+                                      <div className="pro-progress-labels">
+                                        <span className="pro-progress-label" style={{ color: isLow ? '#ef4444' : '#1e293b' }}>
+                                          {displayQty.toLocaleString(undefined, { maximumFractionDigits: 2 })} {pu}
+                                        </span>
+                                        {ing.minStockThreshold && <span className="pro-progress-label">Min {ing.minStockThreshold / (pu === 'kg' || pu === 'liter' ? 1000 : 1)} {pu}</span>}
+                                      </div>
+                                      {ing.minStockThreshold ? (
+                                        <div className="pro-progress-bar">
+                                          <div 
+                                            className="pro-progress-fill" 
+                                            style={{ 
+                                              width: `${Math.min(((ing.stockQtyBase || 0) / (ing.minStockThreshold * 2)) * 100, 100)}%`, 
+                                              backgroundColor: isLow ? '#ef4444' : '#10b981' 
+                                            }} 
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div className="pro-progress-bar">
+                                          <div className="pro-progress-fill" style={{ width: '100%', backgroundColor: '#e2e8f0' }} />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td data-label="Cost" align="right">
+                                    <div style={{ fontWeight: 600 }}>Rp{displayCost.toLocaleString()}</div>
+                                    <div style={{ fontSize: 10, color: '#64748b' }}>per {pu}</div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -1445,22 +1542,50 @@ export const DashboardPage = () => {
                             <tr>
                               <th>Recipe Name</th>
                               <th>Yield</th>
-                              <th align="right">Overhead</th>
+                              <th>Overhead</th>
+                              <th align="right">Cost/Yield</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {recipes.map(rec => (
-                              <tr key={rec.$id}>
-                                <td data-label="Recipe Name">
-                                  <div className="manage-item-cell">
-                                    <Utensils size={16} color="#64748b" />
-                                    <span className="manage-item-name">{rec.name}</span>
-                                  </div>
-                                </td>
-                                <td data-label="Yield">{rec.yield} units</td>
-                                <td data-label="Overhead" align="right">{rec.overheadPercent}%</td>
-                              </tr>
-                            ))}
+                            {recipes.map(rec => {
+                              const costPerYield = getRecipeCost(rec.$id);
+                              return (
+                                <tr key={rec.$id}>
+                                  <td data-label="Recipe Name">
+                                    <div className="manage-item-cell">
+                                      <Utensils size={16} color="#64748b" />
+                                      <span className="manage-item-name">{rec.name}</span>
+                                    </div>
+                                  </td>
+                                  <td data-label="Yield">{rec.yield} units</td>
+                                  <td data-label="Overhead">
+                                    <div className="pro-progress-container">
+                                      {(() => {
+                                        const costPerYield = getRecipeCost(rec.$id);
+                                        const overheadPercent = rec.overheadPercent || 0;
+                                        return (
+                                          <>
+                                            <div className="pro-progress-labels">
+                                              <span className="pro-progress-label">{overheadPercent}% OH</span>
+                                              <span className="pro-progress-label">Rp{(costPerYield * (overheadPercent / 100)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                            </div>
+                                            <div className="pro-progress-bar">
+                                              <div className="pro-progress-fill" style={{ width: `${100 - overheadPercent}%`, backgroundColor: '#e2e8f0' }} />
+                                              <div className="pro-progress-fill" style={{ width: `${overheadPercent}%`, backgroundColor: '#f59e0b' }} />
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
+                                  </td>
+                                  <td data-label="Cost/Yield" align="right">
+                                    <div style={{ fontWeight: 700, color: '#10b981' }}>
+                                      Rp{costPerYield.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -1501,7 +1626,25 @@ export const DashboardPage = () => {
                                     </div>
                                   </td>
                                   <td data-label="Date">{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
-                                  <td data-label="Amount" align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
+                                  <td data-label="Amount" align="right">
+                                    <div className="pro-progress-container" style={{ marginLeft: 'auto' }}>
+                                      {(() => {
+                                        const totalExp = Math.max(stats.totalExpenses, 1);
+                                        const share = ((exp.amount || 0) / totalExp) * 100;
+                                        return (
+                                          <>
+                                            <div className="pro-progress-labels">
+                                              <span className="pro-progress-label">Rp{exp.amount?.toLocaleString()}</span>
+                                              <span className="pro-progress-label">{Math.round(share)}%</span>
+                                            </div>
+                                            <div className="pro-progress-bar">
+                                              <div className="pro-progress-fill" style={{ width: `${share}%`, backgroundColor: '#ef4444' }} />
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
+                                  </td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" onClick={() => handleEdit(exp)}><Edit2 size={14} /></button>
@@ -1547,9 +1690,27 @@ export const DashboardPage = () => {
                                     </div>
                                   </td>
                                   <td data-label="Change">
-                                    <span style={{ fontWeight: 800, color: isPositive ? '#10b981' : '#ef4444' }}>
-                                      {isPositive ? '+' : ''}{st.deltaBase} {ingred?.baseUnit}
-                                    </span>
+                                    <div className="pro-progress-container">
+                                      {(() => {
+                                        const absVal = Math.abs(st.deltaBase);
+                                        // Max change in the visible history
+                                        const maxChange = Math.max(...stockAdjustments.slice(0, 100).map(s => Math.abs(s.deltaBase)), 1);
+                                        const intensity = (absVal / maxChange) * 100;
+                                        return (
+                                          <>
+                                            <div className="pro-progress-labels">
+                                              <span className="pro-progress-label" style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
+                                                {isPositive ? '+' : ''}{st.deltaBase} {ingred?.baseUnit}
+                                              </span>
+                                              <span className="pro-progress-label">{Math.round(intensity)}%</span>
+                                            </div>
+                                            <div className="pro-progress-bar">
+                                              <div className="pro-progress-fill" style={{ width: `${intensity}%`, backgroundColor: isPositive ? '#10b981' : '#ef4444' }} />
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
                                   </td>
                                   <td data-label="Reason"><span className="text-muted" style={{ fontSize: '12px' }}>{st.reason || 'Correction'}</span></td>
                                   <td data-label="Date" align="right">{new Date(st.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
