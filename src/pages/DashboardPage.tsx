@@ -2076,45 +2076,42 @@ export const DashboardPage = () => {
 
           {/* Recipe Detail Modal */}
           {viewingRecipe && (
-            <div className="app-modal-root" style={{ zIndex: 10000 }}>
-              <div className="app-modal-overlay" onClick={() => setViewingRecipe(null)} />
-              <div className="app-modal-container" style={{ maxWidth: '500px' }}>
-                <div className="app-modal-content">
-                  <header className="app-modal-header">
-                    <div>
-                      <h3 className="app-modal-title">{viewingRecipe.name}</h3>
-                      <p className="app-modal-subtitle">Ingredient List ({recipeLines.filter(l => l.recipeId === viewingRecipe.$id).length} items)</p>
-                    </div>
-                    <button className="app-modal-close" onClick={() => setViewingRecipe(null)}><X size={20} /></button>
-                  </header>
-                  <div className="app-modal-body" style={{ padding: 0, overflowX: 'auto' }}>
-                    <table className="pro-table">
-                      <thead>
-                        <tr>
-                          <th>Material</th>
-                          <th align="right">Qty</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recipeLines.filter(l => l.recipeId === viewingRecipe.$id).map(line => {
-                          const ing = ingredients.find(i => i.$id === line.ingredientId);
-                          return (
-                            <tr key={line.$id}>
-                              <td>{ing?.name || 'Unknown Ingredient'}</td>
-                              <td align="right" className="font-bold">{line.quantity} {line.unit || ing?.baseUnit}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+            <div className="modal-overlay">
+              <div className="modal-card" style={{ maxWidth: '500px' }}>
+                <header className="modal-header">
+                  <div>
+                    <h3 style={{ margin: 0 }}>{viewingRecipe.name}</h3>
+                    <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '4px' }}>Ingredient List ({recipeLines.filter(l => l.recipeId === viewingRecipe.$id).length} items)</p>
                   </div>
-                  <footer className="app-modal-footer">
-                    <div style={{ flex: 1 }}>
-                      <span className="text-muted" style={{ fontSize: 12 }}>Yield: <strong>{viewingRecipe.yield} units</strong></span>
-                    </div>
-                    <button className="app-btn-primary" onClick={() => setViewingRecipe(null)}>Close</button>
-                  </footer>
+                  <button className="close-btn" onClick={() => setViewingRecipe(null)}><X size={20} /></button>
+                </header>
+                <div className="modal-content" style={{ padding: 0, overflowX: 'auto' }}>
+                  <table className="pro-table">
+                    <thead>
+                      <tr>
+                        <th>Material</th>
+                        <th align="right">Qty</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recipeLines.filter(l => l.recipeId === viewingRecipe.$id).map(line => {
+                        const ing = ingredients.find(i => i.$id === line.ingredientId);
+                        return (
+                          <tr key={line.$id}>
+                            <td>{ing?.name || 'Unknown Ingredient'}</td>
+                            <td align="right" className="font-bold">{line.quantity} {line.unit || ing?.baseUnit}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
+                <footer className="modal-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <span className="text-muted" style={{ fontSize: 13 }}>Yield: <strong>{viewingRecipe.yield} units</strong></span>
+                  </div>
+                  <button className="app-btn-primary" onClick={() => setViewingRecipe(null)}>Close</button>
+                </footer>
               </div>
             </div>
           )}
