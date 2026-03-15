@@ -12,25 +12,13 @@ export async function list<T>(collectionId: string, queries: string[] = []) {
 
 export async function create<T>(collectionId: string, data: any) {
   if (!databaseId) throw new Error('Missing VITE_APPWRITE_DB_ID');
-  const now = new Date().toISOString();
-  const payload = {
-    ...data,
-    timestamp: data.timestamp || now,
-    updatedAt: now,
-    createdAt: data.createdAt || now,
-  };
-  return (await databases.createDocument(databaseId, collectionId, ID.unique(), payload)) as unknown as T;
+  return (await databases.createDocument(databaseId, collectionId, ID.unique(), data)) as unknown as T;
 }
 
 export async function update<T>(collectionId: string, documentId: string, data: any) {
   if (!databaseId) throw new Error('Missing VITE_APPWRITE_DB_ID');
-  const now = new Date().toISOString();
-  // Ensure we don't accidentally remove updatedAt if it's missing from the partial data
-  const payload = {
-    ...data,
-    updatedAt: now,
-  };
-  return (await databases.updateDocument(databaseId, collectionId, documentId, payload)) as unknown as T;
+  // We don't automatically inject fields here because it might fail for some collections
+  return (await databases.updateDocument(databaseId, collectionId, documentId, data)) as unknown as T;
 }
 
 export async function remove(collectionId: string, documentId: string) {

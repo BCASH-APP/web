@@ -71,6 +71,7 @@ const MUTED = '#8a9e9a';
 type SaleHeaderDoc = {
   $id: string;
   $createdAt: string;
+  $updatedAt?: string;
   timestamp?: string;
   paymentMethod?: string;
   total?: number;
@@ -78,12 +79,11 @@ type SaleHeaderDoc = {
   orgId?: string | null;
   clerkUserId?: string;
   itemCount?: number;
-  updatedAt?: string;
-  createdAt?: string;
 };
 
 type SaleItemDoc = {
   $id: string;
+  $updatedAt?: string;
   saleId: string;
   productId?: string;
   quantity: number;
@@ -92,12 +92,11 @@ type SaleItemDoc = {
   price?: number;
   cost?: number;
   orgId?: string | null;
-  updatedAt?: string;
-  createdAt?: string;
 };
 
 type ProductDoc = {
   $id: string;
+  $updatedAt?: string;
   name?: string;
   categoryId?: string;
   price?: number;
@@ -108,48 +107,42 @@ type ProductDoc = {
   recipeId?: string;
   categoryName?: string;
   categoryColor?: string;
-  updatedAt?: string;
-  createdAt?: string;
 };
-type CategoryDoc = { $id: string; name?: string; color?: string; updatedAt?: string; createdAt?: string };
-type ExpenseDoc = { $id: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string; updatedAt?: string; createdAt?: string };
+type CategoryDoc = { $id: string; $updatedAt?: string; name?: string; color?: string };
+type ExpenseDoc = { $id: string; $updatedAt?: string; type?: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string };
 type IngredientDoc = {
   $id: string;
+  $updatedAt?: string;
   name?: string;
   unitType?: string;
   baseUnit?: string;
   costPerUnit?: number;
   stockQtyBase?: number;
   minStockThreshold?: number;
-  updatedAt?: string;
-  createdAt?: string;
 };
 type RecipeDoc = {
   $id: string;
+  $updatedAt?: string;
   name?: string;
   yield?: number;
   overheadPercent?: number;
-  updatedAt?: string;
-  createdAt?: string;
 };
 type RecipeLineDoc = {
   $id: string;
+  $updatedAt?: string;
   recipeId: string;
   ingredientId: string;
   quantity: number;
   unit?: string;
-  updatedAt?: string;
-  createdAt?: string;
 };
 type StockAdjustmentDoc = {
   $id: string;
+  $updatedAt?: string;
   ingredientId: string;
   deltaBase: number;
   reason?: string;
   timestamp: string;
   $createdAt: string;
-  updatedAt?: string;
-  createdAt?: string;
 };
 
 function tsOf(doc: { timestamp?: string; $createdAt: string }) {
@@ -675,11 +668,12 @@ export const DashboardPage = () => {
         ...cleanData, 
         clerkUserId, 
         orgId: activeStoreId || null,
-        // Ensure timestamp is present for all CRUD items as required by sync schema
-        timestamp: cleanData.timestamp || now,
-        updatedAt: now,
-        // Add createdAt for new items if missing (though Appwrite provides $createdAt)
-        ...(editingItem ? {} : { createdAt: now })
+        // Add required 'type' for expenses if missing
+        ...(managementView === 'expenses' ? { type: cleanData.type || 'custom' } : {}),
+        // Ensure timestamp is present only for collections that support it
+        ...(['expenses', 'transactions', 'stock_changes'].includes(managementView) 
+           ? { timestamp: cleanData.timestamp || now } 
+           : {}),
       };
 
       if (editingItem) {
@@ -713,9 +707,9 @@ export const DashboardPage = () => {
       const now = new Date().toISOString();
       await update(salesCollectionId, id, { 
         status: 'canceled',
-        updatedAt: now
+        timestamp: now // Use timestamp for sync
       });
-      setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled', updatedAt: now } : h));
+      setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled', timestamp: now } : h));
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Cancel failed');
     }
@@ -1168,6 +1162,11 @@ export const DashboardPage = () => {
                                       )}
                                       <span className="manage-item-name">
                                         {p.name || 'Unnamed Product'}
+                                        {p.$updatedAt && (
+                                          <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '1px' }}>
+                                            Synced: {new Date(p.$updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </div>
+                                        )}
                                         <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
                                           {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
                                           <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
@@ -1224,7 +1223,14 @@ export const DashboardPage = () => {
                                   <td data-label="Name">
                                     <div className="manage-item-cell">
                                       <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
-                                      <span className="manage-item-name">{c.name || 'Unnamed'}</span>
+                                      <span className="manage-item-name">
+                                        {c.name || 'Unnamed'}
+                                        {c.$updatedAt && (
+                                          <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '1px' }}>
+                                            Synced: {new Date(c.$updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </div>
+                                        )}
+                                      </span>
                                     </div>
                                   </td>
                                   <td data-label="Items">{products.filter(p => p.categoryId === c.$id).length} products</td>
