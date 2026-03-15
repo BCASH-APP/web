@@ -654,7 +654,6 @@ export const DashboardPage = () => {
 
     if (!colId) return;
     try {
-      const now = new Date().toISOString();
       // Clean data of system fields before saving
       const cleanData = { ...data };
       delete cleanData.$id;
