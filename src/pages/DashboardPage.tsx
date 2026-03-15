@@ -109,7 +109,7 @@ type ProductDoc = {
   categoryColor?: string;
 };
 type CategoryDoc = { $id: string; $updatedAt?: string; name?: string; color?: string };
-type ExpenseDoc = { $id: string; $updatedAt?: string; type?: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string };
+type ExpenseDoc = { $id: string; $updatedAt?: string; type?: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string; ingredientName?: string };
 type IngredientDoc = {
   $id: string;
   $updatedAt?: string;
@@ -583,6 +583,7 @@ export const DashboardPage = () => {
   // Modal / Form States
   const [showModal, setShowModal] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [viewingRecipe, setViewingRecipe] = useState<RecipeDoc | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // HPP Calculation Function
@@ -1500,23 +1501,19 @@ export const DashboardPage = () => {
                                         </span>
                                         {ing.minStockThreshold && <span className="pro-progress-label">Min {ing.minStockThreshold / (pu === 'kg' || pu === 'liter' ? 1000 : 1)} {pu}</span>}
                                       </div>
-                                      {ing.minStockThreshold ? (
-                                        <div className="pro-progress-bar">
-                                          <div 
-                                            className="pro-progress-fill" 
-                                            style={{ 
-                                              width: `${Math.min(((ing.stockQtyBase || 0) / (ing.minStockThreshold * 2)) * 100, 100)}%`, 
-                                              backgroundColor: isLow ? '#ef4444' : '#10b981' 
-                                            }} 
-                                          />
-                                        </div>
-                                      ) : (
-                                        <div className="pro-progress-bar">
-                                          <div className="pro-progress-fill" style={{ width: '100%', backgroundColor: '#e2e8f0' }} />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </td>
+                                        {ing.minStockThreshold ? (
+                                          <div className="pro-progress-bar">
+                                            <div 
+                                              className="pro-progress-fill" 
+                                              style={{ 
+                                                width: `${Math.min(((ing.stockQtyBase || 0) / (ing.minStockThreshold * 2)) * 100, 100)}%`, 
+                                                backgroundColor: isLow ? '#ef4444' : '#10b981' 
+                                              }} 
+                                            />
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </td>
                                   <td data-label="Cost" align="right">
                                     <div style={{ fontWeight: 600 }}>Rp{displayCost.toLocaleString()}</div>
                                     <div style={{ fontSize: 10, color: '#64748b' }}>per {pu}</div>
@@ -1541,23 +1538,23 @@ export const DashboardPage = () => {
                           <thead>
                             <tr>
                               <th>Recipe Name</th>
-                              <th>Yield</th>
+                              <th>Units</th>
                               <th>Overhead</th>
-                              <th align="right">Cost/Yield</th>
+                              <th align="right">HPP</th>
                             </tr>
                           </thead>
                           <tbody>
                             {recipes.map(rec => {
                               const costPerYield = getRecipeCost(rec.$id);
                               return (
-                                <tr key={rec.$id}>
+                                <tr key={rec.$id} onClick={() => setViewingRecipe(rec)} style={{ cursor: 'pointer' }}>
                                   <td data-label="Recipe Name">
                                     <div className="manage-item-cell">
                                       <Utensils size={16} color="#64748b" />
                                       <span className="manage-item-name">{rec.name}</span>
                                     </div>
                                   </td>
-                                  <td data-label="Yield">{rec.yield} units</td>
+                                  <td data-label="Yield">{rec.yield}</td>
                                   <td data-label="Overhead">
                                     <div className="pro-progress-container">
                                       {(() => {
@@ -1578,7 +1575,7 @@ export const DashboardPage = () => {
                                       })()}
                                     </div>
                                   </td>
-                                  <td data-label="Cost/Yield" align="right">
+                                  <td data-label="Production Cost" align="right">
                                     <div style={{ fontWeight: 700, color: '#10b981' }}>
                                       Rp{costPerYield.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </div>
@@ -1621,8 +1618,8 @@ export const DashboardPage = () => {
                                 <tr key={exp.$id}>
                                   <td data-label="Description">
                                     <div className="manage-item-cell">
-                                      <Receipt size={16} color="#f59e0b" />
-                                      <span className="manage-item-name">{exp.description || 'Custom Expense'}</span>
+                                      {exp.type === 'stock' ? <Package size={16} color="#10b981" /> : <Receipt size={16} color="#f59e0b" />}
+                                      <span className="manage-item-name">{exp.description || (exp.type === 'stock' ? exp.ingredientName : 'Custom Expense')}</span>
                                     </div>
                                   </td>
                                   <td data-label="Date">{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
@@ -1690,27 +1687,9 @@ export const DashboardPage = () => {
                                     </div>
                                   </td>
                                   <td data-label="Change">
-                                    <div className="pro-progress-container">
-                                      {(() => {
-                                        const absVal = Math.abs(st.deltaBase);
-                                        // Max change in the visible history
-                                        const maxChange = Math.max(...stockAdjustments.slice(0, 100).map(s => Math.abs(s.deltaBase)), 1);
-                                        const intensity = (absVal / maxChange) * 100;
-                                        return (
-                                          <>
-                                            <div className="pro-progress-labels">
-                                              <span className="pro-progress-label" style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
-                                                {isPositive ? '+' : ''}{st.deltaBase} {ingred?.baseUnit}
-                                              </span>
-                                              <span className="pro-progress-label">{Math.round(intensity)}%</span>
-                                            </div>
-                                            <div className="pro-progress-bar">
-                                              <div className="pro-progress-fill" style={{ width: `${intensity}%`, backgroundColor: isPositive ? '#10b981' : '#ef4444' }} />
-                                            </div>
-                                          </>
-                                        );
-                                      })()}
-                                    </div>
+                                    <span style={{ fontWeight: 800, color: isPositive ? '#10b981' : '#ef4444' }}>
+                                      {isPositive ? '+' : ''}{st.deltaBase} {ingred?.baseUnit}
+                                    </span>
                                   </td>
                                   <td data-label="Reason"><span className="text-muted" style={{ fontSize: '12px' }}>{st.reason || 'Correction'}</span></td>
                                   <td data-label="Date" align="right">{new Date(st.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
@@ -2093,6 +2072,51 @@ export const DashboardPage = () => {
               onClose={() => setSelectedSale(null)}
               onCancel={handleCancelSale}
             />
+          )}
+
+          {/* Recipe Detail Modal */}
+          {viewingRecipe && (
+            <div className="app-modal-root" style={{ zIndex: 10000 }}>
+              <div className="app-modal-overlay" onClick={() => setViewingRecipe(null)} />
+              <div className="app-modal-container" style={{ maxWidth: '500px' }}>
+                <div className="app-modal-content">
+                  <header className="app-modal-header">
+                    <div>
+                      <h3 className="app-modal-title">{viewingRecipe.name}</h3>
+                      <p className="app-modal-subtitle">Ingredient List ({recipeLines.filter(l => l.recipeId === viewingRecipe.$id).length} items)</p>
+                    </div>
+                    <button className="app-modal-close" onClick={() => setViewingRecipe(null)}><X size={20} /></button>
+                  </header>
+                  <div className="app-modal-body" style={{ padding: 0, overflowX: 'auto' }}>
+                    <table className="pro-table">
+                      <thead>
+                        <tr>
+                          <th>Material</th>
+                          <th align="right">Qty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recipeLines.filter(l => l.recipeId === viewingRecipe.$id).map(line => {
+                          const ing = ingredients.find(i => i.$id === line.ingredientId);
+                          return (
+                            <tr key={line.$id}>
+                              <td>{ing?.name || 'Unknown Ingredient'}</td>
+                              <td align="right" className="font-bold">{line.quantity} {line.unit || ing?.baseUnit}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <footer className="app-modal-footer">
+                    <div style={{ flex: 1 }}>
+                      <span className="text-muted" style={{ fontSize: 12 }}>Yield: <strong>{viewingRecipe.yield} units</strong></span>
+                    </div>
+                    <button className="app-btn-primary" onClick={() => setViewingRecipe(null)}>Close</button>
+                  </footer>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>
