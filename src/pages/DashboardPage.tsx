@@ -98,7 +98,7 @@ type ProductDoc = {
   $id: string;
   $updatedAt?: string;
   name?: string;
-  categoryId?: string;
+  category?: string;
   price?: number;
   cost?: number;
   imageUrl?: string;
@@ -236,8 +236,8 @@ const ManagementModal: React.FC<ModalProps> = ({ type, onClose, onSave, initialD
                     <label>Category</label>
                     <select
                       required
-                      value={formData.categoryId || ''}
-                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                      value={formData.category || ''}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     >
                       <option value="">Select Category</option>
                       {categories.map((c) => (
@@ -670,10 +670,6 @@ export const DashboardPage = () => {
         orgId: activeStoreId || null,
         // Add required 'type' for expenses if missing
         ...(managementView === 'expenses' ? { type: cleanData.type || 'custom' } : {}),
-        // Ensure timestamp is present only for collections that support it
-        ...(['expenses', 'transactions', 'stock_changes'].includes(managementView) 
-           ? { timestamp: cleanData.timestamp || now } 
-           : {}),
       };
 
       if (editingItem) {
@@ -886,7 +882,7 @@ export const DashboardPage = () => {
         productSales[pid].qty += Number(it.quantity || 0);
         productSales[pid].revenue += r;
         productSales[pid].cost += c;
-        const catId = productsById[pid]?.categoryId;
+        const catId = productsById[pid]?.category;
         if (catId) categorySales[catId] = (categorySales[catId] || 0) + r;
       });
     });
@@ -1176,7 +1172,7 @@ export const DashboardPage = () => {
                                       </span>
                                     </div>
                                   </td>
-                                  <td data-label="Category">{categories.find(c => c.$id === p.categoryId)?.name || 'No Category'}</td>
+                                  <td data-label="Category">{categories.find(c => c.$id === p.category)?.name || 'No Category'}</td>
                                   <td data-label="HPP" align="right" className="hpp-val-cell">
                                     <span>Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString('id-ID') : (p.cost || 0).toLocaleString('id-ID')}</span>
                                   </td>
@@ -1233,7 +1229,7 @@ export const DashboardPage = () => {
                                       </span>
                                     </div>
                                   </td>
-                                  <td data-label="Items">{products.filter(p => p.categoryId === c.$id).length} products</td>
+                                  <td data-label="Items">{products.filter(p => p.category === c.$id).length} products</td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" title="Edit" onClick={() => handleEdit(c)}><Edit2 size={14} /></button>
