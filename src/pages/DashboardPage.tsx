@@ -77,7 +77,9 @@ type SaleHeaderDoc = {
   status?: string;
   orgId?: string | null;
   clerkUserId?: string;
-  itemCount?: number; // Calculated or if available
+  itemCount?: number;
+  updatedAt?: string;
+  createdAt?: string;
 };
 
 type SaleItemDoc = {
@@ -90,6 +92,8 @@ type SaleItemDoc = {
   price?: number;
   cost?: number;
   orgId?: string | null;
+  updatedAt?: string;
+  createdAt?: string;
 };
 
 type ProductDoc = {
@@ -104,9 +108,11 @@ type ProductDoc = {
   recipeId?: string;
   categoryName?: string;
   categoryColor?: string;
+  updatedAt?: string;
+  createdAt?: string;
 };
-type CategoryDoc = { $id: string; name?: string; color?: string };
-type ExpenseDoc = { $id: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string };
+type CategoryDoc = { $id: string; name?: string; color?: string; updatedAt?: string; createdAt?: string };
+type ExpenseDoc = { $id: string; amount?: number; description?: string; timestamp?: string; $createdAt?: string; updatedAt?: string; createdAt?: string };
 type IngredientDoc = {
   $id: string;
   name?: string;
@@ -115,12 +121,16 @@ type IngredientDoc = {
   costPerUnit?: number;
   stockQtyBase?: number;
   minStockThreshold?: number;
+  updatedAt?: string;
+  createdAt?: string;
 };
 type RecipeDoc = {
   $id: string;
   name?: string;
   yield?: number;
   overheadPercent?: number;
+  updatedAt?: string;
+  createdAt?: string;
 };
 type RecipeLineDoc = {
   $id: string;
@@ -128,6 +138,8 @@ type RecipeLineDoc = {
   ingredientId: string;
   quantity: number;
   unit?: string;
+  updatedAt?: string;
+  createdAt?: string;
 };
 type StockAdjustmentDoc = {
   $id: string;
@@ -136,6 +148,8 @@ type StockAdjustmentDoc = {
   reason?: string;
   timestamp: string;
   $createdAt: string;
+  updatedAt?: string;
+  createdAt?: string;
 };
 
 function tsOf(doc: { timestamp?: string; $createdAt: string }) {
@@ -648,12 +662,21 @@ export const DashboardPage = () => {
     if (!colId) return;
     try {
       const now = new Date().toISOString();
+      // Clean data of system fields before saving
+      const cleanData = { ...data };
+      delete cleanData.$id;
+      delete cleanData.$createdAt;
+      delete cleanData.$updatedAt;
+      delete cleanData.$collectionId;
+      delete cleanData.$databaseId;
+      delete cleanData.$permissions;
+
       const payload = { 
-        ...data, 
+        ...cleanData, 
         clerkUserId, 
         orgId: activeStoreId || null,
         // Ensure timestamp is present for all CRUD items as required by sync schema
-        timestamp: data.timestamp || now,
+        timestamp: cleanData.timestamp || now,
         updatedAt: now,
         // Add createdAt for new items if missing (though Appwrite provides $createdAt)
         ...(editingItem ? {} : { createdAt: now })
