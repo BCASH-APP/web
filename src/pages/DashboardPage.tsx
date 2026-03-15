@@ -710,10 +710,12 @@ export const DashboardPage = () => {
       });
       setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled', timestamp: now } : h));
 
-      // 2. Stock Restoration Logic (Mirroring mobile's cancelOrder)
+      // 2. Stock Restoration Logic (Mirroring mobile's granular traceability)
       if (isPremium) {
         const items = saleItems.filter(it => it.saleId === id);
-        const restorations: Record<string, { ingredient: IngredientDoc, totalDelta: number, productNames: string[] }> = {};
+        
+        // Group by ingredient to update stock ONCE per ingredient (avoid race conditions)
+        const ingredientUpdates: Record<string, { ingredient: IngredientDoc, totalDelta: number, productRestorations: Array<{ pName: string, delta: number }> }> = {};
 
         for (const it of items) {
           const p = products.find(prod => prod.$id === it.productId);
@@ -729,40 +731,35 @@ export const DashboardPage = () => {
 
             const restoration = (line.quantity / batchYield) * it.quantity;
             
-            if (!restorations[ing.$id]) {
-              restorations[ing.$id] = { ingredient: ing, totalDelta: 0, productNames: [] };
+            if (!ingredientUpdates[ing.$id]) {
+              ingredientUpdates[ing.$id] = { ingredient: ing, totalDelta: 0, productRestorations: [] };
             }
-            restorations[ing.$id].totalDelta += restoration;
-            if (!restorations[ing.$id].productNames.includes(p.name || '')) {
-              restorations[ing.$id].productNames.push(p.name || '');
-            }
+            ingredientUpdates[ing.$id].totalDelta += restoration;
+            ingredientUpdates[ing.$id].productRestorations.push({ pName: p.name || 'Unknown', delta: restoration });
           }
         }
 
-        // Apply restorations and create adjustments
-        for (const rId in restorations) {
-          const { ingredient, totalDelta, productNames } = restorations[rId];
+        // Apply updates
+        for (const ingId in ingredientUpdates) {
+          const { ingredient, totalDelta, productRestorations } = ingredientUpdates[ingId];
           const newQty = (ingredient.stockQtyBase || 0) + totalDelta;
-          const reason = `Cancel Sale: ${id} | Products: ${productNames.join(', ')}`;
 
-          // Update Ingredient Stock in Appwrite
+          // Update Ingredient Stock once
           await update(ingredientsCollectionId, ingredient.$id, { stockQtyBase: newQty });
-          
-          // Local update for immediate UI feedback
           setIngredients(prev => prev.map(i => i.$id === ingredient.$id ? { ...i, stockQtyBase: newQty } : i));
 
-          // Create Stock Adjustment record
-          const adjDoc = await create<StockAdjustmentDoc>(stockAdjustmentsCollectionId, {
-            ingredientId: ingredient.$id,
-            deltaBase: totalDelta,
-            reason: reason,
-            clerkUserId,
-            orgId: activeStoreId || null,
-            timestamp: now
-          });
-          
-          // Local update for adjustments
-          setStockAdjustments(prev => [...prev, adjDoc]);
+          // Create individual adjustment records for each product's contribution
+          for (const pr of productRestorations) {
+            const adjDoc = await create<StockAdjustmentDoc>(stockAdjustmentsCollectionId, {
+              ingredientId: ingredient.$id,
+              deltaBase: pr.delta,
+              reason: `Cancel Sale: ${id} | Product: ${pr.pName}`,
+              clerkUserId,
+              orgId: activeStoreId || null,
+              timestamp: now
+            });
+            setStockAdjustments(prev => [...prev, adjDoc]);
+          }
         }
       }
 
