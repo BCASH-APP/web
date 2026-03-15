@@ -1231,44 +1231,22 @@ export const DashboardPage = () => {
                                           <Package size={16} color="#cbd5e1" />
                                         </div>
                                       )}
-                                      <span className="manage-item-name">
-                                        {p.name || 'Unnamed Product'}
-                                        {p.$updatedAt && (
-                                          <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '1px' }}>
-                                            Synced: {new Date(p.$updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                          </div>
-                                        )}
-                                        <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
-                                          {p.usesRecipe && <span className="hpp-badge">RECIPE</span>}
-                                          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
-                                            HPP: Rp{p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId).toLocaleString('id-ID') : (p.cost || 0).toLocaleString('id-ID')}
-                                          </span>
-                                        </div>
-                                      </span>
+                                      <span className="manage-item-name">{p.name || 'Unnamed Product'}</span>
                                     </div>
                                   </td>
                                   <td data-label="Category">{categories.find(c => c.$id === p.category)?.name || 'No Category'}</td>
-                                  <td data-label="Margin" align="right" className="hpp-val-cell">
-                                    <div className="pro-progress-container" style={{ marginLeft: 'auto' }}>
-                                      {(() => {
-                                        const hpp = p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId) : (p.cost || 0);
-                                        const price = p.price || 0;
-                                        const marginPercent = price > 0 ? Math.max(0, ((price - hpp) / price) * 100) : 0;
-                                        const costPercent = 100 - marginPercent;
-                                        return (
-                                          <>
-                                            <div className="pro-progress-labels">
-                                              <span className="pro-progress-label">Margin {Math.round(marginPercent)}%</span>
-                                              <span className="pro-progress-label" style={{ color: '#10b981' }}>Rp{(price - hpp).toLocaleString()}</span>
-                                            </div>
-                                            <div className="pro-progress-bar">
-                                              <div className="pro-progress-fill" style={{ width: `${costPercent}%`, backgroundColor: '#e2e8f0' }} />
-                                              <div className="pro-progress-fill" style={{ width: `${marginPercent}%`, backgroundColor: '#10b981' }} />
-                                            </div>
-                                          </>
-                                        );
-                                      })()}
-                                    </div>
+                                  <td data-label="Margin" align="right">
+                                    {(() => {
+                                      const hpp = p.usesRecipe && p.recipeId ? getRecipeCost(p.recipeId) : (p.cost || 0);
+                                      const price = p.price || 0;
+                                      const marginPercent = price > 0 ? Math.max(0, ((price - hpp) / price) * 100) : 0;
+                                      return (
+                                        <div style={{ textAlign: 'right' }}>
+                                          <div style={{ fontWeight: 700, color: '#10b981' }}>{Math.round(marginPercent)}% Margin</div>
+                                          <div style={{ fontSize: '11px', color: '#64748b' }}>HPP: Rp{hpp.toLocaleString()}</div>
+                                        </div>
+                                      );
+                                    })()}
                                   </td>
                                   <td data-label="Price" align="right">Rp{(p.price || 0).toLocaleString()}</td>
                                   <td data-label="Actions" align="right">
@@ -1301,7 +1279,7 @@ export const DashboardPage = () => {
                           <thead>
                             <tr>
                               <th>Name</th>
-                              <th>Items / Distribution</th>
+                              <th>Items</th>
                               <th align="right">Actions</th>
                             </tr>
                           </thead>
@@ -1313,33 +1291,11 @@ export const DashboardPage = () => {
                                   <td data-label="Name">
                                     <div className="manage-item-cell">
                                       <div className="cat-color-pill" style={{ backgroundColor: c.color || '#3d7066' }} />
-                                      <span className="manage-item-name">
-                                        {c.name || 'Unnamed'}
-                                        {c.$updatedAt && (
-                                          <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '1px' }}>
-                                            Synced: {new Date(c.$updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                          </div>
-                                        )}
-                                      </span>
+                                      <span className="manage-item-name">{c.name || 'Unnamed'}</span>
                                     </div>
                                   </td>
-                                  <td data-label="Distribution">
-                                    {(() => {
-                                      const itemCount = products.filter(p => p.category === c.$id).length;
-                                      const totalItems = Math.max(products.length, 1);
-                                      const share = (itemCount / totalItems) * 100;
-                                      return (
-                                        <div className="pro-progress-container">
-                                          <div className="pro-progress-labels">
-                                            <span className="pro-progress-label">{itemCount} items</span>
-                                            <span className="pro-progress-label">{Math.round(share)}%</span>
-                                          </div>
-                                          <div className="pro-progress-bar">
-                                            <div className="pro-progress-fill" style={{ width: `${share}%`, backgroundColor: c.color || '#3d7066' }} />
-                                          </div>
-                                        </div>
-                                      );
-                                    })()}
+                                  <td data-label="Items">
+                                    <span className="text-muted" style={{ fontWeight: 600 }}>{products.filter(p => p.category === c.$id).length} products</span>
                                   </td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
@@ -1385,26 +1341,7 @@ export const DashboardPage = () => {
                                     </span>
                                   </td>
                                   <td data-label="Payment">{(h.paymentMethod || 'cash').toUpperCase()}</td>
-                                  <td data-label="Total" align="right">
-                                    <div className="pro-progress-container" style={{ marginLeft: 'auto' }}>
-                                      {(() => {
-                                        const maxSale = Math.max(...stats.listHeaders.map(totalOf), 1);
-                                        const currentTotal = totalOf(h);
-                                        const share = (currentTotal / maxSale) * 100;
-                                        return (
-                                          <>
-                                            <div className="pro-progress-labels">
-                                              <span className="pro-progress-label">Rp{currentTotal.toLocaleString()}</span>
-                                              <span className="pro-progress-label">{Math.round(share)}%</span>
-                                            </div>
-                                            <div className="pro-progress-bar">
-                                              <div className="pro-progress-fill" style={{ width: `${share}%`, backgroundColor: h.status === 'canceled' ? '#fca5a5' : '#3d7066' }} />
-                                            </div>
-                                          </>
-                                        );
-                                      })()}
-                                    </div>
-                                  </td>
+                                  <td data-label="Total" align="right" className="font-bold">Rp{totalOf(h).toLocaleString()}</td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn view-btn" title="Details" onClick={() => setSelectedSale(h)}><ChevronRight size={14} /></button>
@@ -1556,24 +1493,9 @@ export const DashboardPage = () => {
                                   </td>
                                   <td data-label="Yield">{rec.yield}</td>
                                   <td data-label="Overhead">
-                                    <div className="pro-progress-container">
-                                      {(() => {
-                                        const costPerYield = getRecipeCost(rec.$id);
-                                        const overheadPercent = rec.overheadPercent || 0;
-                                        return (
-                                          <>
-                                            <div className="pro-progress-labels">
-                                              <span className="pro-progress-label">{overheadPercent}% OH</span>
-                                              <span className="pro-progress-label">Rp{(costPerYield * (overheadPercent / 100)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                                            </div>
-                                            <div className="pro-progress-bar">
-                                              <div className="pro-progress-fill" style={{ width: `${100 - overheadPercent}%`, backgroundColor: '#e2e8f0' }} />
-                                              <div className="pro-progress-fill" style={{ width: `${overheadPercent}%`, backgroundColor: '#f59e0b' }} />
-                                            </div>
-                                          </>
-                                        );
-                                      })()}
-                                    </div>
+                                    <span className={`pro-status-badge ${rec.overheadPercent && rec.overheadPercent > 0 ? 'warning' : 'neutral'}`}>
+                                      {rec.overheadPercent || 0}%
+                                    </span>
                                   </td>
                                   <td data-label="Production Cost" align="right">
                                     <div style={{ fontWeight: 700, color: '#10b981' }}>
@@ -1623,25 +1545,7 @@ export const DashboardPage = () => {
                                     </div>
                                   </td>
                                   <td data-label="Date">{new Date(tsOf(exp as any)).toLocaleDateString()}</td>
-                                  <td data-label="Amount" align="right">
-                                    <div className="pro-progress-container" style={{ marginLeft: 'auto' }}>
-                                      {(() => {
-                                        const totalExp = Math.max(stats.totalExpenses, 1);
-                                        const share = ((exp.amount || 0) / totalExp) * 100;
-                                        return (
-                                          <>
-                                            <div className="pro-progress-labels">
-                                              <span className="pro-progress-label">Rp{exp.amount?.toLocaleString()}</span>
-                                              <span className="pro-progress-label">{Math.round(share)}%</span>
-                                            </div>
-                                            <div className="pro-progress-bar">
-                                              <div className="pro-progress-fill" style={{ width: `${share}%`, backgroundColor: '#ef4444' }} />
-                                            </div>
-                                          </>
-                                        );
-                                      })()}
-                                    </div>
-                                  </td>
+                                  <td data-label="Amount" align="right" className="font-bold text-danger">Rp{exp.amount?.toLocaleString()}</td>
                                   <td data-label="Actions" align="right">
                                     <div className="manage-row-actions">
                                       <button className="icon-btn edit-btn" onClick={() => handleEdit(exp)}><Edit2 size={14} /></button>
