@@ -700,12 +700,75 @@ export const DashboardPage = () => {
     if (!confirm('Are you sure you want to cancel this sale? This action is permanent.')) return;
     try {
       const now = new Date().toISOString();
+      const sale = saleHeaders.find(h => h.$id === id);
+      if (!sale) return;
+
+      // 1. Update Sale Header Status
       await update(salesCollectionId, id, { 
         status: 'canceled',
         timestamp: now // Use timestamp for sync
       });
       setSaleHeaders(prev => prev.map(h => h.$id === id ? { ...h, status: 'canceled', timestamp: now } : h));
+
+      // 2. Stock Restoration Logic (Mirroring mobile's cancelOrder)
+      if (isPremium) {
+        const items = saleItems.filter(it => it.saleId === id);
+        const restorations: Record<string, { ingredient: IngredientDoc, totalDelta: number, productNames: string[] }> = {};
+
+        for (const it of items) {
+          const p = products.find(prod => prod.$id === it.productId);
+          if (!p || !p.usesRecipe || !p.recipeId) continue;
+
+          const r = recipes.find(rec => rec.$id === p.recipeId);
+          const lines = recipeLines.filter(rl => rl.recipeId === p.recipeId);
+          const batchYield = Math.max(r?.yield || 1, 1);
+
+          for (const line of lines) {
+            const ing = ingredients.find(ingred => ingred.$id === line.ingredientId);
+            if (!ing) continue;
+
+            const restoration = (line.quantity / batchYield) * it.quantity;
+            
+            if (!restorations[ing.$id]) {
+              restorations[ing.$id] = { ingredient: ing, totalDelta: 0, productNames: [] };
+            }
+            restorations[ing.$id].totalDelta += restoration;
+            if (!restorations[ing.$id].productNames.includes(p.name || '')) {
+              restorations[ing.$id].productNames.push(p.name || '');
+            }
+          }
+        }
+
+        // Apply restorations and create adjustments
+        for (const rId in restorations) {
+          const { ingredient, totalDelta, productNames } = restorations[rId];
+          const newQty = (ingredient.stockQtyBase || 0) + totalDelta;
+          const reason = `Cancel Sale: ${id} | Products: ${productNames.join(', ')}`;
+
+          // Update Ingredient Stock in Appwrite
+          await update(ingredientsCollectionId, ingredient.$id, { stockQtyBase: newQty });
+          
+          // Local update for immediate UI feedback
+          setIngredients(prev => prev.map(i => i.$id === ingredient.$id ? { ...i, stockQtyBase: newQty } : i));
+
+          // Create Stock Adjustment record
+          const adjDoc = await create<StockAdjustmentDoc>(stockAdjustmentsCollectionId, {
+            ingredientId: ingredient.$id,
+            deltaBase: totalDelta,
+            reason: reason,
+            clerkUserId,
+            orgId: activeStoreId || null,
+            timestamp: now
+          });
+          
+          // Local update for adjustments
+          setStockAdjustments(prev => [...prev, adjDoc]);
+        }
+      }
+
+      alert('Transaction canceled and stock restored.');
     } catch (e) {
+      console.error('Cancel sale error:', e);
       alert(e instanceof Error ? e.message : 'Cancel failed');
     }
   };
