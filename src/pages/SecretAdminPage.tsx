@@ -28,7 +28,7 @@ export const SecretAdminPage = () => {
   const [loginError, setLoginError] = useState('');
 
   const [users, setUsers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'expired'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'expired' | 'pending'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState(PLANS[1].id);
@@ -129,6 +129,31 @@ export const SecretAdminPage = () => {
     }
   };
 
+  const handleReset = async () => {
+    if (!selectedUser || !window.confirm(`Are you sure you want to RESET ${selectedUser.fullName}? This will clear all plan data.`)) return;
+    setActivating(true);
+    setStatusMsg({ type: 'info', text: 'Resetting account plan...' });
+
+    try {
+      const resp = await appwriteFunctions.createExecution(
+        '6994b6f5000daf8d8580',
+        JSON.stringify({ action: 'reset', clerkUserId: selectedUser.id })
+      );
+
+      const result = JSON.parse(resp.responseBody);
+      if (result.success) {
+        setStatusMsg({ type: 'success', text: `Account reset successful for ${selectedUser.fullName}` });
+        fetchUsers();
+      } else {
+        setStatusMsg({ type: 'error', text: result.message || 'Failed to reset' });
+      }
+    } catch (err: any) {
+      setStatusMsg({ type: 'error', text: err.message || 'Error executing reset' });
+    } finally {
+      setActivating(false);
+    }
+  };
+
   const handleActivate = async () => {
     if (!selectedUser) return;
     setActivating(true);
@@ -170,9 +195,11 @@ export const SecretAdminPage = () => {
       );
 
       const { isActive, planId } = getPlanInfo(u);
+      const isPending = u.unsafeMetadata?.pendingPayment === true;
 
       if (activeTab === 'active') return searchMatch && isActive;
       if (activeTab === 'expired') return searchMatch && !isActive && planId !== 'none';
+      if (activeTab === 'pending') return searchMatch && isPending;
       return searchMatch;
     });
   }, [users, searchQuery, activeTab, getPlanInfo]);
@@ -239,6 +266,7 @@ export const SecretAdminPage = () => {
 
             <div className="admin-tabs">
               <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>All</button>
+              <button className={activeTab === 'pending' ? 'active' : ''} onClick={() => setActiveTab('pending')} style={{ color: '#f59e0b' }}>Pending ⚡</button>
               <button className={activeTab === 'active' ? 'active' : ''} onClick={() => setActiveTab('active')}>Active</button>
               <button className={activeTab === 'expired' ? 'active' : ''} onClick={() => setActiveTab('expired')}>Expired</button>
             </div>
@@ -258,11 +286,18 @@ export const SecretAdminPage = () => {
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map(u => {
                   const { planId, isActive, expiresAt, metaSource, duration } = getPlanInfo(u);
+                  const isPending = u.unsafeMetadata?.pendingPayment === true;
                   return (
                     <div
                       key={u.id}
-                      className={`user-list-item ${selectedUser?.id === u.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedUser(u)}
+                      className={`user-list-item ${selectedUser?.id === u.id ? 'selected' : ''} ${isPending ? 'pending-border' : ''}`}
+                      onClick={() => {
+                        setSelectedUser(u);
+                        if (isPending) {
+                          setSelectedPlan(u.unsafeMetadata.pendingPlan);
+                          setDuration(u.unsafeMetadata.pendingDuration || 1);
+                        }
+                      }}
                     >
                       <div className="u-main">
                         <div className="u-top">
@@ -401,12 +436,20 @@ export const SecretAdminPage = () => {
 
                 <button
                   className="activate-btn"
-                  disabled={activating || getPlanInfo(selectedUser).isActive}
+                  disabled={activating || (getPlanInfo(selectedUser).isActive && activeTab !== 'pending')}
                   onClick={handleActivate}
-                  style={getPlanInfo(selectedUser).isActive ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
+                  style={(getPlanInfo(selectedUser).isActive && activeTab !== 'pending') ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
                 >
-                  {getPlanInfo(selectedUser).isActive ? 'Plan Already Active' : activating ? 'Processing...' : 'Activate Plan Now'}
-                  {!activating && !getPlanInfo(selectedUser).isActive && <ArrowRight size={18} />}
+                  {selectedUser.unsafeMetadata?.pendingPayment ? 'Accept & Activate Payment' : getPlanInfo(selectedUser).isActive ? 'Plan Already Active' : activating ? 'Processing...' : 'Activate Plan Now'}
+                  {!activating && !(getPlanInfo(selectedUser).isActive && activeTab !== 'pending') && <ArrowRight size={18} />}
+                </button>
+
+                <button 
+                  className="reset-btn"
+                  onClick={handleReset}
+                  disabled={activating}
+                >
+                  Reset Account to No Plan
                 </button>
               </div>
             ) : (
