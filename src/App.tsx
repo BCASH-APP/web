@@ -9,6 +9,7 @@ import { SignUpPage } from './pages/auth/SignUpPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { InvitationPage } from './pages/auth/InvitationPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { SecretAdminPage } from './pages/SecretAdminPage';
 // import { ReleasesPage } from './pages/ReleasesPage';
 import { DownloadPage } from './pages/DownloadPage';
 import { PrivacyPage } from './pages/PrivacyPage';
@@ -136,6 +137,7 @@ function App() {
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/invitation" element={<InvitationPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/system-admin-panel" element={<SecretAdminPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
