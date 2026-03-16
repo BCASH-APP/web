@@ -9,7 +9,7 @@ import './pages.css';
 const AUTH = {
   username: 'achmedbasith',
   // SHA-256 of "@Achmed02262004"
-  passwordHash: '840f17b629479695d7e7e6f3d1797380927c8d9b23616ae3824bb8b6f3aef39f' 
+  passwordHash: '50d838d127f5eca595ad9578a46e3dd4bfd9bf92bad61989810299a2e06e5422' 
 };
 
 async function sha256(message: string) {
