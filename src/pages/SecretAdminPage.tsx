@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, User, Lock, CheckCircle2, AlertCircle, Search, CreditCard, ArrowRight, LogOut } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Shield, User, Lock, CheckCircle2, AlertCircle, Search, CreditCard, ArrowRight, LogOut, Info } from 'lucide-react';
 import { appwriteFunctions } from '../lib/appwrite';
 import './pages.css';
 
@@ -80,16 +80,17 @@ export const SecretAdminPage = () => {
     }
   };
 
-  const getPlanInfo = (u: any) => {
-    // Migration logic: check publicMetadata first, then unsafeMetadata
+  const getPlanInfo = useCallback((u: any) => {
     const meta = u.publicMetadata?.planId ? u.publicMetadata : u.unsafeMetadata;
     const planId = meta?.planId || 'none';
     const expiresAt = meta?.expiresAt ? new Date(meta.expiresAt) : null;
     const activatedAt = meta?.activatedAt ? new Date(meta.activatedAt) : null;
+    const duration = meta?.duration || meta?.subDuration || null;
+    const totalActivations = u.publicMetadata?.totalActivations || 0;
     const isActive = expiresAt ? expiresAt > new Date() : false;
 
-    return { planId, expiresAt, activatedAt, isActive, metaSource: u.publicMetadata?.planId ? 'public' : 'unsafe' };
-  };
+    return { planId, expiresAt, activatedAt, duration, totalActivations, isActive, metaSource: u.publicMetadata?.planId ? 'public' : 'unsafe' };
+  }, []);
 
   const handleMigrate = async () => {
     if (!selectedUser) return;
@@ -149,7 +150,6 @@ export const SecretAdminPage = () => {
       const result = JSON.parse(resp.responseBody);
       if (result.success) {
         setStatusMsg({ type: 'success', text: `Successfully activated ${selectedPlan} for ${selectedUser.id}` });
-        // Refresh the list after activation
         fetchUsers();
       } else {
         setStatusMsg({ type: 'error', text: result.message || 'Failed to activate plan' });
@@ -161,19 +161,21 @@ export const SecretAdminPage = () => {
     }
   };
 
-  const filteredUsers = users.filter(u => {
-    const searchMatch = (
-      u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => {
+      const searchMatch = (
+        u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
-    const { isActive } = getPlanInfo(u);
+      const { isActive, planId } = getPlanInfo(u);
 
-    if (activeTab === 'active') return searchMatch && isActive;
-    if (activeTab === 'expired') return searchMatch && !isActive && getPlanInfo(u).planId !== 'none';
-    return searchMatch;
-  });
+      if (activeTab === 'active') return searchMatch && isActive;
+      if (activeTab === 'expired') return searchMatch && !isActive && planId !== 'none';
+      return searchMatch;
+    });
+  }, [users, searchQuery, activeTab, getPlanInfo]);
 
   if (!isAuthorized) {
     return (
@@ -250,12 +252,12 @@ export const SecretAdminPage = () => {
               />
             </div>
 
-            <div className="user-list">
+            <div className="user-list scrollable-zone">
               {loadingUsers ? (
                 <div className="loading-spinner">Fetching Users from Clerk...</div>
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map(u => {
-                  const { planId, isActive, expiresAt, metaSource } = getPlanInfo(u);
+                  const { planId, isActive, expiresAt, metaSource, duration } = getPlanInfo(u);
                   return (
                     <div
                       key={u.id}
@@ -266,7 +268,7 @@ export const SecretAdminPage = () => {
                         <div className="u-top">
                           <span className="u-name">{u.fullName}</span>
                           <span className={`u-plan-pill ${isActive ? 'active' : 'inactive'}`}>
-                            {planId === 'none' ? 'NO PLAN' : planId.toUpperCase()}
+                            {planId === 'none' ? 'NO PLAN' : `${planId.toUpperCase()} ${duration ? `(${duration}M)` : ''}`}
                             {metaSource === 'unsafe' && <span className="u-mig-tag">MIG</span>}
                           </span>
                         </div>
@@ -296,59 +298,71 @@ export const SecretAdminPage = () => {
 
             {selectedUser ? (
               <div className="activation-form">
-                <div className="user-summary-box">
-                  <div className="sum-row">
-                    <label>Full Name</label>
-                    <div className="sum-val">{selectedUser.fullName}</div>
-                  </div>
-                  <div className="sum-row">
-                    <label>User ID</label>
-                    <div className="sum-val mono">{selectedUser.id}</div>
-                  </div>
-                  <div className="sum-row">
-                    <label>Current Status</label>
-                    <div className="sum-val">
-                      {getPlanInfo(selectedUser).isActive ? (
-                        <span style={{ color: '#22C55E', fontWeight: 700 }}>ACTIVE - {getPlanInfo(selectedUser).planId.toUpperCase()}</span>
-                      ) : (
-                        <span style={{ color: '#ef4444', fontWeight: 700 }}>EXPIRED / NONE</span>
-                      )}
+                <div className="user-summary-box compact">
+                  <div className="sum-grid-2">
+                    <div className="sum-row">
+                      <label>Full Name</label>
+                      <div className="sum-val">{selectedUser.fullName}</div>
+                    </div>
+                    <div className="sum-row">
+                      <label>User ID</label>
+                      <div className="sum-val mono">{selectedUser.id}</div>
                     </div>
                   </div>
+
+                  <div className="sum-grid-2 divider-top">
+                    <div className="sum-row">
+                      <label>Current Status</label>
+                      <div className="sum-val">
+                        {getPlanInfo(selectedUser).isActive ? (
+                          <span style={{ color: '#22C55E', fontWeight: 800 }}>ACTIVE — {getPlanInfo(selectedUser).planId.toUpperCase()} ({getPlanInfo(selectedUser).duration || '?'}M)</span>
+                        ) : (
+                          <span style={{ color: '#ef4444', fontWeight: 800 }}>EXPIRED / NONE</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="sum-row">
+                      <label>Total Activations</label>
+                      <div className="sum-val">{getPlanInfo(selectedUser).totalActivations} <Info size={14} style={{ opacity: 0.5, verticalAlign: 'middle' }} /></div>
+                    </div>
+                  </div>
+
                   {getPlanInfo(selectedUser).planId !== 'none' && (
-                    <>
+                    <div className="sum-grid-2 divider-top">
                       <div className="sum-row">
                         <label>Date Start</label>
-                        <div className="sum-val">{getPlanInfo(selectedUser).activatedAt?.toLocaleString() || 'N/A'}</div>
+                        <div className="sum-val">{getPlanInfo(selectedUser).activatedAt?.toLocaleDateString()}</div>
                       </div>
                       <div className="sum-row">
                         <label>Date End</label>
-                        <div className="sum-val">{getPlanInfo(selectedUser).expiresAt?.toLocaleString() || 'N/A'}</div>
+                        <div className="sum-val">{getPlanInfo(selectedUser).expiresAt?.toLocaleDateString()}</div>
                       </div>
-                    </>
+                    </div>
                   )}
+
                   {getPlanInfo(selectedUser).metaSource === 'unsafe' && (
                     <button
                       className="migrate-btn"
                       onClick={handleMigrate}
                       disabled={activating}
                       style={{ 
-                        marginTop: '1rem', 
-                        background: '#3b82f6', 
+                        marginTop: '0.5rem', 
+                        background: '#3d7066', 
                         color: 'white', 
-                        padding: '0.75rem', 
-                        borderRadius: '12px', 
+                        padding: '0.65rem', 
+                        borderRadius: '10px', 
                         border: 'none', 
                         fontWeight: 800, 
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        fontSize: '0.8rem'
                       }}
                     >
-                      {activating ? 'Migrating...' : 'Run Migration (Sync to Public)'}
-                      {!activating && <Shield size={16} />}
+                      {activating ? 'Migrating...' : 'Fix Metalog (Sync to Public)'}
+                      {!activating && <Shield size={14} />}
                     </button>
                   )}
                 </div>
