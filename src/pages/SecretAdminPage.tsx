@@ -403,13 +403,15 @@ export const SecretAdminPage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Select Plan</label>
+                  <label>Select Plan {activeTab === 'pending' && <span style={{ fontSize: '0.7rem', color: '#f59e0b' }}>(Locked to Request)</span>}</label>
                   <div className="plan-buttons">
                     {PLANS.map(p => (
                       <button
                         key={p.id}
                         className={`plan-btn ${selectedPlan === p.id ? 'active' : ''}`}
                         onClick={() => setSelectedPlan(p.id)}
+                        disabled={activeTab === 'pending'}
+                        style={activeTab === 'pending' && selectedPlan !== p.id ? { opacity: 0.4 } : {}}
                       >
                         {p.name}
                       </button>
@@ -418,8 +420,12 @@ export const SecretAdminPage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Duration (Months)</label>
-                  <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                  <label>Duration (Months) {activeTab === 'pending' && <span style={{ fontSize: '0.7rem', color: '#f59e0b' }}>(Locked to Request)</span>}</label>
+                  <select 
+                    value={duration} 
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                    disabled={activeTab === 'pending'}
+                  >
                     <option value={1}>1 Month</option>
                     <option value={3}>3 Months</option>
                     <option value={6}>6 Months</option>
