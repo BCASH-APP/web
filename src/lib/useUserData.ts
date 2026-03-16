@@ -29,6 +29,7 @@ export function useUserData() {
 
     let meta: any = null;
     if (orgPub?.planId && orgPub.planId !== 'free_trial') meta = orgPub;
+    else if (userPub?.planId && userPub.planId !== 'free_trial') meta = userPub;
     else if (userUnsafe?.planId && userUnsafe.planId !== 'free_trial') meta = userUnsafe;
     else meta = userPub;
 

@@ -39,10 +39,12 @@ function App() {
   }, [location.pathname]);
 
   const isDashboard = location.pathname.startsWith('/dashboard');
+  const isAdmin = location.pathname === '/system-admin-panel';
+  const hideHeader = isDashboard || isAdmin;
 
   return (
     <div className={`app-root ${mobileMenuOpen ? 'menu-open' : ''} ${isDashboard ? 'is-dashboard-layout' : ''}`}>
-      {!isDashboard && (
+      {!hideHeader && (
         <header className="pro-topbar" style={{ position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--pro-border)' }}>
           <div className="pro-topbar-left">
             <Link to="/" className="pro-sidebar-logo" style={{ border: 'none', padding: 0, height: 'auto', textDecoration: 'none' }}>

@@ -85,9 +85,47 @@ export const SecretAdminPage = () => {
     const meta = u.publicMetadata?.planId ? u.publicMetadata : u.unsafeMetadata;
     const planId = meta?.planId || 'none';
     const expiresAt = meta?.expiresAt ? new Date(meta.expiresAt) : null;
+    const activatedAt = meta?.activatedAt ? new Date(meta.activatedAt) : null;
     const isActive = expiresAt ? expiresAt > new Date() : false;
 
-    return { planId, expiresAt, isActive, metaSource: u.publicMetadata?.planId ? 'public' : 'unsafe' };
+    return { planId, expiresAt, activatedAt, isActive, metaSource: u.publicMetadata?.planId ? 'public' : 'unsafe' };
+  };
+
+  const handleMigrate = async () => {
+    if (!selectedUser) return;
+    const { planId, expiresAt, activatedAt } = getPlanInfo(selectedUser);
+    if (planId === 'none') return;
+
+    setActivating(true);
+    setStatusMsg({ type: 'info', text: 'Migrating user metadata...' });
+
+    try {
+      const payload = {
+        clerkUserId: selectedUser.id,
+        planId: planId,
+        orgId: selectedUser.orgId,
+        expiresAt: expiresAt?.toISOString(),
+        activatedAt: activatedAt?.toISOString(),
+        action: 'migrate'
+      };
+
+      const resp = await appwriteFunctions.createExecution(
+        '6994b6f5000daf8d8580',
+        JSON.stringify(payload)
+      );
+
+      const result = JSON.parse(resp.responseBody);
+      if (result.success) {
+        setStatusMsg({ type: 'success', text: `Successfully migrated ${selectedUser.fullName}` });
+        fetchUsers();
+      } else {
+        setStatusMsg({ type: 'error', text: result.message || 'Failed to migrate' });
+      }
+    } catch (err: any) {
+      setStatusMsg({ type: 'error', text: err.message || 'Error executing migration' });
+    } finally {
+      setActivating(false);
+    }
   };
 
   const handleActivate = async () => {
@@ -271,12 +309,48 @@ export const SecretAdminPage = () => {
                     <label>Current Status</label>
                     <div className="sum-val">
                       {getPlanInfo(selectedUser).isActive ? (
-                        <span style={{ color: '#22C55E', fontWeight: 700 }}>ACTIVE - {getPlanInfo(selectedUser).planId}</span>
+                        <span style={{ color: '#22C55E', fontWeight: 700 }}>ACTIVE - {getPlanInfo(selectedUser).planId.toUpperCase()}</span>
                       ) : (
                         <span style={{ color: '#ef4444', fontWeight: 700 }}>EXPIRED / NONE</span>
                       )}
                     </div>
                   </div>
+                  {getPlanInfo(selectedUser).planId !== 'none' && (
+                    <>
+                      <div className="sum-row">
+                        <label>Date Start</label>
+                        <div className="sum-val">{getPlanInfo(selectedUser).activatedAt?.toLocaleString() || 'N/A'}</div>
+                      </div>
+                      <div className="sum-row">
+                        <label>Date End</label>
+                        <div className="sum-val">{getPlanInfo(selectedUser).expiresAt?.toLocaleString() || 'N/A'}</div>
+                      </div>
+                    </>
+                  )}
+                  {getPlanInfo(selectedUser).metaSource === 'unsafe' && (
+                    <button
+                      className="migrate-btn"
+                      onClick={handleMigrate}
+                      disabled={activating}
+                      style={{ 
+                        marginTop: '1rem', 
+                        background: '#3b82f6', 
+                        color: 'white', 
+                        padding: '0.75rem', 
+                        borderRadius: '12px', 
+                        border: 'none', 
+                        fontWeight: 800, 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      {activating ? 'Migrating...' : 'Run Migration (Sync to Public)'}
+                      {!activating && <Shield size={16} />}
+                    </button>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -313,11 +387,12 @@ export const SecretAdminPage = () => {
 
                 <button
                   className="activate-btn"
-                  disabled={activating}
+                  disabled={activating || getPlanInfo(selectedUser).isActive}
                   onClick={handleActivate}
+                  style={getPlanInfo(selectedUser).isActive ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
                 >
-                  {activating ? 'Processing...' : 'Activate Plan Now'}
-                  {!activating && <ArrowRight size={18} />}
+                  {getPlanInfo(selectedUser).isActive ? 'Plan Already Active' : activating ? 'Processing...' : 'Activate Plan Now'}
+                  {!activating && !getPlanInfo(selectedUser).isActive && <ArrowRight size={18} />}
                 </button>
               </div>
             ) : (
