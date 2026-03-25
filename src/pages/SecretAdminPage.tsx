@@ -1,45 +1,59 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Shield, User, Lock, CheckCircle2, AlertCircle, Search, CreditCard, ArrowRight, LogOut, Info } from 'lucide-react';
-import { appwriteFunctions } from '../lib/appwrite';
-import './pages.css';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  Shield,
+  User,
+  Lock,
+  CheckCircle2,
+  AlertCircle,
+  Search,
+  CreditCard,
+  ArrowRight,
+  LogOut,
+  Info,
+} from "lucide-react";
+import { appwriteFunctions } from "../lib/appwrite";
+import "./pages.css";
 
 const AUTH = {
-  username: 'achmedbasith',
-  passwordHash: '50d838d127f5eca595ad9578a46e3dd4bfd9bf92bad61989810299a2e06e5422'
+  username: "achmedbasith",
+  passwordHash:
+    "50d838d127f5eca595ad9578a46e3dd4bfd9bf92bad61989810299a2e06e5422",
 };
 
 async function sha256(message: string) {
   const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 const PLANS = [
-  { id: 'free_trial', name: 'Free Trial', price: 0 },
-  { id: 'basic', name: 'Basic Plan', price: 89000 },
-  { id: 'premium', name: 'Premium Plan', price: 239000 }
+  { id: "free_trial", name: "Free Trial", price: 0 },
+  { id: "basic", name: "Basic Plan", price: 89000 },
+  { id: "premium", name: "Premium Plan", price: 239000 },
 ];
 
 export const SecretAdminPage = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   const [users, setUsers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'expired' | 'pending'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<
+    "all" | "active" | "expired" | "pending"
+  >("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState(PLANS[1].id);
   const [duration, setDuration] = useState(1);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [activating, setActivating] = useState(false);
-  const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
+  const [statusMsg, setStatusMsg] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    const session = sessionStorage.getItem('admin_auth');
-    if (session === 'true') {
+    const session = sessionStorage.getItem("admin_auth");
+    if (session === "true") {
       setIsAuthorized(true);
       fetchUsers();
     }
@@ -50,24 +64,24 @@ export const SecretAdminPage = () => {
     const hash = await sha256(password);
     if (username === AUTH.username && hash === AUTH.passwordHash) {
       setIsAuthorized(true);
-      sessionStorage.setItem('admin_auth', 'true');
+      sessionStorage.setItem("admin_auth", "true");
       fetchUsers();
     } else {
-      setLoginError('Invalid credentials');
+      setLoginError("Invalid credentials");
     }
   };
 
   const handleLogout = () => {
     setIsAuthorized(false);
-    sessionStorage.removeItem('admin_auth');
+    sessionStorage.removeItem("admin_auth");
   };
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
       const resp = await appwriteFunctions.createExecution(
-        '6994b6f5000daf8d8580',
-        JSON.stringify({ action: 'list' })
+        "6994b6f5000daf8d8580",
+        JSON.stringify({ action: "list" }),
       );
       const result = JSON.parse(resp.responseBody);
       if (result.success) {
@@ -82,23 +96,31 @@ export const SecretAdminPage = () => {
 
   const getPlanInfo = useCallback((u: any) => {
     const meta = u.publicMetadata?.planId ? u.publicMetadata : u.unsafeMetadata;
-    const planId = meta?.planId || 'none';
+    const planId = meta?.planId || "none";
     const expiresAt = meta?.expiresAt ? new Date(meta.expiresAt) : null;
     const activatedAt = meta?.activatedAt ? new Date(meta.activatedAt) : null;
     const duration = meta?.duration || meta?.subDuration || null;
     const totalActivations = u.publicMetadata?.totalActivations || 0;
     const isActive = expiresAt ? expiresAt > new Date() : false;
 
-    return { planId, expiresAt, activatedAt, duration, totalActivations, isActive, metaSource: u.publicMetadata?.planId ? 'public' : 'unsafe' };
+    return {
+      planId,
+      expiresAt,
+      activatedAt,
+      duration,
+      totalActivations,
+      isActive,
+      metaSource: u.publicMetadata?.planId ? "public" : "unsafe",
+    };
   }, []);
 
   const handleMigrate = async () => {
     if (!selectedUser) return;
     const { planId, expiresAt, activatedAt } = getPlanInfo(selectedUser);
-    if (planId === 'none') return;
+    if (planId === "none") return;
 
     setActivating(true);
-    setStatusMsg({ type: 'info', text: 'Migrating user metadata...' });
+    setStatusMsg({ type: "info", text: "Migrating user metadata..." });
 
     try {
       const payload = {
@@ -107,48 +129,72 @@ export const SecretAdminPage = () => {
         orgId: selectedUser.orgId,
         expiresAt: expiresAt?.toISOString(),
         activatedAt: activatedAt?.toISOString(),
-        action: 'migrate'
+        action: "migrate",
       };
 
       const resp = await appwriteFunctions.createExecution(
-        '6994b6f5000daf8d8580',
-        JSON.stringify(payload)
+        "6994b6f5000daf8d8580",
+        JSON.stringify(payload),
       );
 
       const result = JSON.parse(resp.responseBody);
       if (result.success) {
-        setStatusMsg({ type: 'success', text: `Successfully migrated ${selectedUser.fullName}` });
+        setStatusMsg({
+          type: "success",
+          text: `Successfully migrated ${selectedUser.fullName}`,
+        });
         fetchUsers();
       } else {
-        setStatusMsg({ type: 'error', text: result.message || 'Failed to migrate' });
+        setStatusMsg({
+          type: "error",
+          text: result.message || "Failed to migrate",
+        });
       }
     } catch (err: any) {
-      setStatusMsg({ type: 'error', text: err.message || 'Error executing migration' });
+      setStatusMsg({
+        type: "error",
+        text: err.message || "Error executing migration",
+      });
     } finally {
       setActivating(false);
     }
   };
 
   const handleReset = async () => {
-    if (!selectedUser || !window.confirm(`Are you sure you want to RESET ${selectedUser.fullName}? This will clear all plan data.`)) return;
+    if (
+      !selectedUser ||
+      !window.confirm(
+        `Are you sure you want to RESET ${selectedUser.fullName}? This will clear all plan data.`,
+      )
+    )
+      return;
     setActivating(true);
-    setStatusMsg({ type: 'info', text: 'Resetting account plan...' });
+    setStatusMsg({ type: "info", text: "Resetting account plan..." });
 
     try {
       const resp = await appwriteFunctions.createExecution(
-        '6994b6f5000daf8d8580',
-        JSON.stringify({ action: 'reset', clerkUserId: selectedUser.id })
+        "6994b6f5000daf8d8580",
+        JSON.stringify({ action: "reset", clerkUserId: selectedUser.id }),
       );
 
       const result = JSON.parse(resp.responseBody);
       if (result.success) {
-        setStatusMsg({ type: 'success', text: `Account reset successful for ${selectedUser.fullName}` });
+        setStatusMsg({
+          type: "success",
+          text: `Account reset successful for ${selectedUser.fullName}`,
+        });
         fetchUsers();
       } else {
-        setStatusMsg({ type: 'error', text: result.message || 'Failed to reset' });
+        setStatusMsg({
+          type: "error",
+          text: result.message || "Failed to reset",
+        });
       }
     } catch (err: any) {
-      setStatusMsg({ type: 'error', text: err.message || 'Error executing reset' });
+      setStatusMsg({
+        type: "error",
+        text: err.message || "Error executing reset",
+      });
     } finally {
       setActivating(false);
     }
@@ -157,49 +203,59 @@ export const SecretAdminPage = () => {
   const handleActivate = async () => {
     if (!selectedUser) return;
     setActivating(true);
-    setStatusMsg({ type: 'info', text: 'Activating plan...' });
+    setStatusMsg({ type: "info", text: "Activating plan..." });
 
     try {
       const payload = {
+        action: "activate",
         clerkUserId: selectedUser.id,
         planId: selectedPlan,
         orgId: selectedUser.orgId,
-        duration: duration
+        duration: duration,
       };
 
       const resp = await appwriteFunctions.createExecution(
-        '6994b6f5000daf8d8580',
-        JSON.stringify(payload)
+        "6994b6f5000daf8d8580",
+        JSON.stringify(payload),
       );
 
       const result = JSON.parse(resp.responseBody);
       if (result.success) {
-        setStatusMsg({ type: 'success', text: `Successfully activated ${selectedPlan} for ${selectedUser.id}` });
+        setStatusMsg({
+          type: "success",
+          text: `Successfully activated ${selectedPlan} for ${selectedUser.id}`,
+        });
         fetchUsers();
       } else {
-        setStatusMsg({ type: 'error', text: result.message || 'Failed to activate plan' });
+        setStatusMsg({
+          type: "error",
+          text: result.message || "Failed to activate plan",
+        });
       }
     } catch (err: any) {
-      setStatusMsg({ type: 'error', text: err.message || 'Error executing activation' });
+      setStatusMsg({
+        type: "error",
+        text: err.message || "Error executing activation",
+      });
     } finally {
       setActivating(false);
     }
   };
 
   const filteredUsers = useMemo(() => {
-    return users.filter(u => {
-      const searchMatch = (
+    return users.filter((u) => {
+      const searchMatch =
         u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+        u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
 
       const { isActive, planId } = getPlanInfo(u);
       const isPending = u.unsafeMetadata?.pendingPayment === true;
 
-      if (activeTab === 'active') return searchMatch && isActive;
-      if (activeTab === 'expired') return searchMatch && !isActive && planId !== 'none';
-      if (activeTab === 'pending') return searchMatch && isPending;
+      if (activeTab === "active") return searchMatch && isActive;
+      if (activeTab === "expired")
+        return searchMatch && !isActive && planId !== "none";
+      if (activeTab === "pending") return searchMatch && isPending;
       return searchMatch;
     });
   }, [users, searchQuery, activeTab, getPlanInfo]);
@@ -235,7 +291,9 @@ export const SecretAdminPage = () => {
               />
             </div>
             {loginError && <div className="error-msg">{loginError}</div>}
-            <button type="submit" className="login-btn">Secure Login</button>
+            <button type="submit" className="login-btn">
+              Secure Login
+            </button>
           </form>
         </div>
       </div>
@@ -265,10 +323,31 @@ export const SecretAdminPage = () => {
             </div>
 
             <div className="admin-tabs">
-              <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>All</button>
-              <button className={activeTab === 'pending' ? 'active' : ''} onClick={() => setActiveTab('pending')} style={{ color: '#f59e0b' }}>Pending ⚡</button>
-              <button className={activeTab === 'active' ? 'active' : ''} onClick={() => setActiveTab('active')}>Active</button>
-              <button className={activeTab === 'expired' ? 'active' : ''} onClick={() => setActiveTab('expired')}>Expired</button>
+              <button
+                className={activeTab === "all" ? "active" : ""}
+                onClick={() => setActiveTab("all")}
+              >
+                All
+              </button>
+              <button
+                className={activeTab === "pending" ? "active" : ""}
+                onClick={() => setActiveTab("pending")}
+                style={{ color: "#f59e0b" }}
+              >
+                Pending ⚡
+              </button>
+              <button
+                className={activeTab === "active" ? "active" : ""}
+                onClick={() => setActiveTab("active")}
+              >
+                Active
+              </button>
+              <button
+                className={activeTab === "expired" ? "active" : ""}
+                onClick={() => setActiveTab("expired")}
+              >
+                Expired
+              </button>
             </div>
 
             <div className="search-box">
@@ -282,15 +361,18 @@ export const SecretAdminPage = () => {
 
             <div className="user-list scrollable-zone">
               {loadingUsers ? (
-                <div className="loading-spinner">Fetching Users from Clerk...</div>
+                <div className="loading-spinner">
+                  Fetching Users from Clerk...
+                </div>
               ) : filteredUsers.length > 0 ? (
-                filteredUsers.map(u => {
-                  const { planId, isActive, expiresAt, metaSource, duration } = getPlanInfo(u);
+                filteredUsers.map((u) => {
+                  const { planId, isActive, expiresAt, metaSource, duration } =
+                    getPlanInfo(u);
                   const isPending = u.unsafeMetadata?.pendingPayment === true;
                   return (
                     <div
                       key={u.id}
-                      className={`user-list-item ${selectedUser?.id === u.id ? 'selected' : ''} ${isPending ? 'pending-border' : ''}`}
+                      className={`user-list-item ${selectedUser?.id === u.id ? "selected" : ""} ${isPending ? "pending-border" : ""}`}
                       onClick={() => {
                         setSelectedUser(u);
                         if (isPending) {
@@ -302,24 +384,36 @@ export const SecretAdminPage = () => {
                       <div className="u-main">
                         <div className="u-top">
                           <span className="u-name">{u.fullName}</span>
-                          <span className={`u-plan-pill ${isActive ? 'active' : 'inactive'}`}>
-                            {planId === 'none' ? 'NO PLAN' : `${planId.toUpperCase()} ${duration ? `(${duration}M)` : ''}`}
-                            {metaSource === 'unsafe' && <span className="u-mig-tag">MIG</span>}
+                          <span
+                            className={`u-plan-pill ${isActive ? "active" : "inactive"}`}
+                          >
+                            {planId === "none"
+                              ? "NO PLAN"
+                              : `${planId.toUpperCase()} ${duration ? `(${duration}M)` : ""}`}
+                            {metaSource === "unsafe" && (
+                              <span className="u-mig-tag">MIG</span>
+                            )}
                           </span>
                         </div>
                         <div className="u-meta-row">
                           <span className="u-email">{u.email}</span>
                           <span className="u-date">
-                            {expiresAt ? `Exp: ${expiresAt.toLocaleDateString()}` : `Joined: ${new Date(u.createdAt).toLocaleDateString()}`}
+                            {expiresAt
+                              ? `Exp: ${expiresAt.toLocaleDateString()}`
+                              : `Joined: ${new Date(u.createdAt).toLocaleDateString()}`}
                           </span>
                         </div>
                       </div>
-                      {selectedUser?.id === u.id && <CheckCircle2 size={16} color="#22C55E" />}
+                      {selectedUser?.id === u.id && (
+                        <CheckCircle2 size={16} color="#22C55E" />
+                      )}
                     </div>
                   );
                 })
               ) : (
-                <div className="no-users">No users found match your filter.</div>
+                <div className="no-users">
+                  No users found match your filter.
+                </div>
               )}
             </div>
           </div>
@@ -350,68 +444,101 @@ export const SecretAdminPage = () => {
                       <label>Current Status</label>
                       <div className="sum-val">
                         {getPlanInfo(selectedUser).isActive ? (
-                          <span style={{ color: '#22C55E', fontWeight: 800 }}>ACTIVE — {getPlanInfo(selectedUser).planId.toUpperCase()} ({getPlanInfo(selectedUser).duration || '?'}M)</span>
+                          <span style={{ color: "#22C55E", fontWeight: 800 }}>
+                            ACTIVE —{" "}
+                            {getPlanInfo(selectedUser).planId.toUpperCase()} (
+                            {getPlanInfo(selectedUser).duration || "?"}M)
+                          </span>
                         ) : (
-                          <span style={{ color: '#ef4444', fontWeight: 800 }}>EXPIRED / NONE</span>
+                          <span style={{ color: "#ef4444", fontWeight: 800 }}>
+                            EXPIRED / NONE
+                          </span>
                         )}
                       </div>
                     </div>
                     <div className="sum-row">
                       <label>Total Activations</label>
-                      <div className="sum-val">{getPlanInfo(selectedUser).totalActivations} <Info size={14} style={{ opacity: 0.5, verticalAlign: 'middle' }} /></div>
+                      <div className="sum-val">
+                        {getPlanInfo(selectedUser).totalActivations}{" "}
+                        <Info
+                          size={14}
+                          style={{ opacity: 0.5, verticalAlign: "middle" }}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {getPlanInfo(selectedUser).planId !== 'none' && (
+                  {getPlanInfo(selectedUser).planId !== "none" && (
                     <div className="sum-grid-2 divider-top">
                       <div className="sum-row">
                         <label>Date Start</label>
-                        <div className="sum-val">{getPlanInfo(selectedUser).activatedAt?.toLocaleDateString()}</div>
+                        <div className="sum-val">
+                          {getPlanInfo(
+                            selectedUser,
+                          ).activatedAt?.toLocaleDateString()}
+                        </div>
                       </div>
                       <div className="sum-row">
                         <label>Date End</label>
-                        <div className="sum-val">{getPlanInfo(selectedUser).expiresAt?.toLocaleDateString()}</div>
+                        <div className="sum-val">
+                          {getPlanInfo(
+                            selectedUser,
+                          ).expiresAt?.toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {getPlanInfo(selectedUser).metaSource === 'unsafe' && (
+                  {getPlanInfo(selectedUser).metaSource === "unsafe" && (
                     <button
                       className="migrate-btn"
                       onClick={handleMigrate}
                       disabled={activating}
-                      style={{ 
-                        marginTop: '0.5rem', 
-                        background: '#3d7066', 
-                        color: 'white', 
-                        padding: '0.65rem', 
-                        borderRadius: '10px', 
-                        border: 'none', 
-                        fontWeight: 800, 
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        fontSize: '0.8rem'
+                      style={{
+                        marginTop: "0.5rem",
+                        background: "#3d7066",
+                        color: "white",
+                        padding: "0.65rem",
+                        borderRadius: "10px",
+                        border: "none",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.5rem",
+                        fontSize: "0.8rem",
                       }}
                     >
-                      {activating ? 'Migrating...' : 'Fix Metalog (Sync to Public)'}
+                      {activating
+                        ? "Migrating..."
+                        : "Fix Metalog (Sync to Public)"}
                       {!activating && <Shield size={14} />}
                     </button>
                   )}
                 </div>
 
                 <div className="form-group">
-                  <label>Select Plan {activeTab === 'pending' && <span style={{ fontSize: '0.7rem', color: '#f59e0b' }}>(Locked to Request)</span>}</label>
+                  <label>
+                    Select Plan{" "}
+                    {activeTab === "pending" && (
+                      <span style={{ fontSize: "0.7rem", color: "#f59e0b" }}>
+                        (Locked to Request)
+                      </span>
+                    )}
+                  </label>
                   <div className="plan-buttons">
-                    {PLANS.map(p => (
+                    {PLANS.map((p) => (
                       <button
                         key={p.id}
-                        className={`plan-btn ${selectedPlan === p.id ? 'active' : ''}`}
+                        className={`plan-btn ${selectedPlan === p.id ? "active" : ""}`}
                         onClick={() => setSelectedPlan(p.id)}
-                        disabled={activeTab === 'pending'}
-                        style={activeTab === 'pending' && selectedPlan !== p.id ? { opacity: 0.4 } : {}}
+                        disabled={activeTab === "pending"}
+                        style={
+                          activeTab === "pending" && selectedPlan !== p.id
+                            ? { opacity: 0.4 }
+                            : {}
+                        }
                       >
                         {p.name}
                       </button>
@@ -420,11 +547,18 @@ export const SecretAdminPage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Duration (Months) {activeTab === 'pending' && <span style={{ fontSize: '0.7rem', color: '#f59e0b' }}>(Locked to Request)</span>}</label>
-                  <select 
-                    value={duration} 
+                  <label>
+                    Duration (Months){" "}
+                    {activeTab === "pending" && (
+                      <span style={{ fontSize: "0.7rem", color: "#f59e0b" }}>
+                        (Locked to Request)
+                      </span>
+                    )}
+                  </label>
+                  <select
+                    value={duration}
                     onChange={(e) => setDuration(Number(e.target.value))}
-                    disabled={activeTab === 'pending'}
+                    disabled={activeTab === "pending"}
                   >
                     <option value={1}>1 Month</option>
                     <option value={3}>3 Months</option>
@@ -435,22 +569,45 @@ export const SecretAdminPage = () => {
 
                 {statusMsg.text && (
                   <div className={`status-msg ${statusMsg.type}`}>
-                    {statusMsg.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+                    {statusMsg.type === "error" ? (
+                      <AlertCircle size={18} />
+                    ) : (
+                      <CheckCircle2 size={18} />
+                    )}
                     <span>{statusMsg.text}</span>
                   </div>
                 )}
 
                 <button
                   className="activate-btn"
-                  disabled={activating || (getPlanInfo(selectedUser).isActive && activeTab !== 'pending')}
+                  disabled={
+                    activating ||
+                    (getPlanInfo(selectedUser).isActive &&
+                      activeTab !== "pending")
+                  }
                   onClick={handleActivate}
-                  style={(getPlanInfo(selectedUser).isActive && activeTab !== 'pending') ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
+                  style={
+                    getPlanInfo(selectedUser).isActive &&
+                    activeTab !== "pending"
+                      ? { background: "#94a3b8", cursor: "not-allowed" }
+                      : {}
+                  }
                 >
-                  {selectedUser.unsafeMetadata?.pendingPayment ? 'Accept & Activate Payment' : getPlanInfo(selectedUser).isActive ? 'Plan Already Active' : activating ? 'Processing...' : 'Activate Plan Now'}
-                  {!activating && !(getPlanInfo(selectedUser).isActive && activeTab !== 'pending') && <ArrowRight size={18} />}
+                  {selectedUser.unsafeMetadata?.pendingPayment
+                    ? "Accept & Activate Payment"
+                    : getPlanInfo(selectedUser).isActive
+                      ? "Plan Already Active"
+                      : activating
+                        ? "Processing..."
+                        : "Activate Plan Now"}
+                  {!activating &&
+                    !(
+                      getPlanInfo(selectedUser).isActive &&
+                      activeTab !== "pending"
+                    ) && <ArrowRight size={18} />}
                 </button>
 
-                <button 
+                <button
                   className="reset-btn"
                   onClick={handleReset}
                   disabled={activating}
