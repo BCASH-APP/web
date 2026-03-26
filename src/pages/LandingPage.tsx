@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import './pages.css';
 import appIconPng from '../assets/appIcon/icon.png';
-import splashIcon from '../assets/appIcon/splash-icon.png';
+// import splashIcon from '../assets/appIcon/splash-icon.png';
 import adaptiveIcon from '../assets/appIcon/adaptive-icon.png';
 
 const FEATURES = [
