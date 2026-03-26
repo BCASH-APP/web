@@ -140,7 +140,7 @@ export const LandingPage = () => {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="landing-footer">
+      {/* <footer className="landing-footer">
         <div className="landing-footer-inner">
           <div className="landing-footer-brand">
             <img src={appIconPng} alt="BCash POS" className="landing-footer-icon" />
@@ -155,7 +155,7 @@ export const LandingPage = () => {
           </nav>
           <p className="landing-footer-copy">© {new Date().getFullYear()} Basthdev. Built with ❤️ by Basth.</p>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 };
