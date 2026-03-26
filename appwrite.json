@@ -1,0 +1,36 @@
+{
+  "projectId": "bcash-web",
+  "projectName": "BCash Web",
+  "functions": [],
+  "hosting": {
+    "enabled": true,
+    "folder": "dist",
+    "entrypoint": "index.html",
+    "rewrites": [
+      {
+        "source": "/system-admin-panel",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/dashboard",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/download",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/policy",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/auth/**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
