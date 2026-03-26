@@ -43,7 +43,7 @@ import {
   Utensils,
   X,
 } from 'lucide-react';
-import logoIcon from '../assets/appIcon/splash-icon-transparant.png';
+import logoIcon from '../assets/appIcon/splash-icon.png';
 import './pages.css';
 import './dashboard-pro.css';
 import {
