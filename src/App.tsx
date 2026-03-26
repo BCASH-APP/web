@@ -2,7 +2,6 @@ import { Route, Routes, Navigate, Link, useLocation } from 'react-router-dom';
 import { UserButton, SignInButton, SignUpButton, useUser } from '@clerk/react';
 import { LayoutDashboard, Home, Download, Menu, X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import appIcon from './assets/appIcon/icon.png';
 import { LandingPage } from './pages/LandingPage';
 import { SignInPage } from './pages/auth/SignInPage';
 import { SignUpPage } from './pages/auth/SignUpPage';
@@ -40,7 +39,9 @@ function App() {
 
   const isDashboard = location.pathname.startsWith('/dashboard');
   const isAdmin = location.pathname === '/system-admin-panel';
+  const isLandingPage = location.pathname === '/';
   const hideHeader = isDashboard || isAdmin;
+  const useMobileHeader = isLandingPage || isDashboard; // Use mobile-style header on landing page
 
   return (
     <div className={`app-root ${mobileMenuOpen ? 'menu-open' : ''} ${isDashboard ? 'is-dashboard-layout' : ''}`}>
@@ -48,23 +49,25 @@ function App() {
         <header className="pro-topbar" style={{ position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--pro-border)' }}>
           <div className="pro-topbar-left">
             <Link to="/" className="pro-sidebar-logo" style={{ border: 'none', padding: 0, height: 'auto', textDecoration: 'none' }}>
-              <img src={appIcon || "./assets/appIcon/favicon.png"} alt="Bcash" style={{ width: 32, height: 32, borderRadius: 8 }} />
+              <img src="/logo.png" alt="Bcash" style={{ width: 32, height: 32, borderRadius: 8 }} />
               <span style={{ fontSize: 18, color: 'var(--pro-text-main)' }}>BCash POS</span>
             </Link>
           </div>
 
           <nav className="pro-topbar-left" style={{ flex: 1, justifyContent: 'center' }}>
-            {!isSignedIn && (
+            {!useMobileHeader && !isSignedIn && (
               <NavLink to="/" icon={<Home size={16} />} label="Home" />
             )}
-            <NavLink to="/download" icon={<Download size={16} />} label="Download" />
-            {isSignedIn && (
+            {!useMobileHeader && (
+              <NavLink to="/download" icon={<Download size={16} />} label="Download" />
+            )}
+            {!useMobileHeader && isSignedIn && (
               <NavLink to="/dashboard" icon={<LayoutDashboard size={16} />} label="Dashboard" />
             )}
           </nav>
 
           <div className="pro-topbar-right">
-            {!isSignedIn && (
+            {!useMobileHeader && !isSignedIn && (
               <div className="auth-btns-desktop" style={{ display: 'flex', gap: '12px' }}>
                 <SignInButton mode="modal">
                   <button className="pro-hero-btn" style={{ background: '#f1f5f9', color: '#0f172a' }} type="button">
@@ -78,7 +81,7 @@ function App() {
                 </SignUpButton>
               </div>
             )}
-            {isSignedIn && (
+            {!useMobileHeader && isSignedIn && (
               <div className="pro-user-profile" style={{ gap: '16px' }}>
                 <span className="pro-user-name hide-mobile">Manage Account</span>
                 <UserButton />
@@ -98,7 +101,7 @@ function App() {
       )}
 
       {/* Mobile Drawer */}
-      {!isDashboard && (
+      {(!isDashboard || useMobileHeader) && (
         <div className={`mobile-drawer ${mobileMenuOpen ? 'open' : ''}`}>
           <nav className="mobile-nav">
             {!isSignedIn && (
