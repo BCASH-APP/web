@@ -58,10 +58,10 @@ export const LandingPage = () => {
         <div className="landing-left">
           <div className="landing-phone-stack">
             <div className="landing-phone landing-phone-back">
-              <img src={adaptiveIcon} alt="BCash POS adaptive icon" className="landing-phone-img" />
+              <img src={adaptiveIcon} alt="BCash POS" className="landing-phone-img" />
             </div>
             <div className="landing-phone landing-phone-front">
-              <img src={splashIcon} alt="BCash POS splash" className="landing-phone-img landing-phone-img-cover" />
+              <img src={adaptiveIcon} alt="BCash POS" className="landing-phone-img landing-phone-img-cover" />
             </div>
           </div>
 
